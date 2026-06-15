@@ -12,6 +12,10 @@ secrets/
 # Node 依赖（compile.js 若引入第三方包时产生）
 node_modules/
 
+# Python 字节码缓存
+__pycache__/
+*.pyc
+
 # Office / WPS 打开文档时生成的临时锁文件（如 ~$讲义.docx）
 ~$*
 

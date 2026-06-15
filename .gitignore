@@ -1,0 +1,21 @@
+# —— 云盘式仓库：尽量少排除，只挡掉真正的噪音文件 ——
+
+# Node 依赖（compile.js 若引入第三方包时产生）
+node_modules/
+
+# Office / WPS 打开文档时生成的临时锁文件（如 ~$讲义.docx）
+~$*
+
+# 操作系统垃圾文件
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# 编辑器 / IDE 配置
+.vscode/
+.idea/
+*.swp
+
+# 临时文件
+*.tmp
+*.log

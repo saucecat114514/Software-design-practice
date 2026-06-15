@@ -17,7 +17,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 HERE = Path(__file__).resolve()
 AGENTS_DIR = HERE.parent.parent          # wiki/summaries/agents
-PROJECT_ROOT = HERE.parents[3]           # D:\Project
+# server.py 位于 …/wiki/summaries/agents/web/，向上 5 级才是项目根 D:\Project
+# parents: [0]=web [1]=agents [2]=summaries [3]=wiki [4]=D:\Project
+PROJECT_ROOT = HERE.parents[4]           # D:\Project
 RAW_NOTES = PROJECT_ROOT / "raw" / "notes"
 sys.path.insert(0, str(AGENTS_DIR))
 
@@ -70,7 +72,8 @@ class Handler(BaseHTTPRequestHandler):
                     return self._send(400, json.dumps({"error": "unknown agent"}, ensure_ascii=False))
                 convo = body.get("messages") or [{"role": "user", "content": KICKOFF}]
                 msgs = [{"role": "system", "content": agent.system_prompt()}] + convo
-                reply = llm_config.chat(msgs, max_tokens=900)
+                max_tokens = int(body.get("max_tokens") or 900)   # 整理需求时前端会传更大值
+                reply = llm_config.chat(msgs, max_tokens=max_tokens)
                 return self._send(200, json.dumps({"reply": reply}, ensure_ascii=False))
             if self.path == "/api/save":
                 agent = AGENTS.get(body.get("agent"))

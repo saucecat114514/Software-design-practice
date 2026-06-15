@@ -92,11 +92,13 @@ function render(){
   chat.scrollTop = chat.scrollHeight;
 }
 
-async function callChat(){
+async function callChat(maxTokens){
   busy = true; setBusy(); status.textContent = "A1 智能体思考中…";
   try{
+    const payload = {agent:sel.value, messages:messages};
+    if(maxTokens) payload.max_tokens = maxTokens;
     const r = await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({agent:sel.value, messages:messages})});
+      body:JSON.stringify(payload)});
     const d = await r.json();
     if(d.error) throw new Error(d.error);
     messages.push({role:"assistant", content:d.reply});
@@ -120,8 +122,11 @@ $("#sendBtn").onclick = async ()=>{
 };
 $("#sumBtn").onclick = async ()=>{
   if(busy || messages.length===0) return;
-  messages.push({role:"user", content:"请把我们刚才聊到的内容整理成结构化需求条目（含 REQ 编号、涉众原话、需求提炼、优先级、验收要点）。"});
-  render(); await callChat();
+  messages.push({role:"user", content:
+    "请通览我们从这次访谈开头到现在的【完整对话】，把已经聊到的【所有】需求毫无遗漏地整理成结构化需求条目。要求："+
+    "①覆盖全程涉及的每一个模块/话题，不要只整理最近一段；②逐条给出 REQ 编号、需求来源、涉众原话（直接引用）、需求提炼、优先级、验收要点；"+
+    "③合并重复、补全之前因篇幅被截断的条目；④最后用一句话说明还有哪些模块尚未访谈、建议后续补充。"});
+  render(); await callChat(4096);   // 整理需求给足输出预算，避免截断
 };
 $("#saveBtn").onclick = async ()=>{
   if(messages.length===0){ status.textContent="还没有对话内容"; return; }

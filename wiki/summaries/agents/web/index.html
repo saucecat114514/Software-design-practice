@@ -50,6 +50,7 @@
     <label class="sub">访谈涉众：</label>
     <select id="agentSel"></select>
     <button id="startBtn" class="primary">开始 / 重新访谈</button>
+    <button id="restoreBtn">恢复上次保存</button>
     <button id="sumBtn">整理需求</button>
     <button id="saveBtn">保存到知识库</button>
   </header>
@@ -75,11 +76,24 @@ let targetName = "";
 let busy = false;
 
 function esc(t){const d=document.createElement("div");d.textContent=t;return d.innerHTML;}
+function curTarget(){ const o = sel.options[sel.selectedIndex]; return o ? o.dataset.target : ""; }
+function lsKey(){ return "a1_chat_" + sel.value; }
+// 每轮对话自动存浏览器本地缓存，关服务/刷新后不丢
+function persist(){ try{ if(sel.value && messages.length) localStorage.setItem(lsKey(), JSON.stringify({target:targetName, messages})); }catch(e){} }
+// 从本地缓存恢复当前涉众对话，返回恢复条数（无则 0）
+function restoreLocal(){
+  try{
+    const raw = localStorage.getItem(lsKey());
+    if(raw){ const d = JSON.parse(raw);
+      if(d && d.messages && d.messages.length){ targetName = d.target || curTarget(); messages = d.messages; render(); return messages.length; } }
+  }catch(e){}
+  return 0;
+}
 
 function render(){
   chat.innerHTML = "";
   if(messages.length===0){
-    chat.innerHTML = '<div class="hint">选择涉众并点「开始 / 重新访谈」。</div>'; return;
+    chat.innerHTML = '<div class="hint">选择涉众，点「开始 / 重新访谈」开始；<br/>若之前存过，点「恢复上次保存」可找回。</div>'; return;
   }
   for(const m of messages){
     const self = m.role==="user";
@@ -102,23 +116,41 @@ async function callChat(maxTokens){
     const d = await r.json();
     if(d.error) throw new Error(d.error);
     messages.push({role:"assistant", content:d.reply});
-    render(); status.textContent="";
+    render(); persist(); status.textContent="";
   }catch(e){ status.textContent = "出错："+e.message; }
   finally{ busy=false; setBusy(); }
 }
-function setBusy(){ for(const b of ["#startBtn","#sendBtn","#sumBtn","#saveBtn"]) $(b).disabled=busy; }
+function setBusy(){ for(const b of ["#startBtn","#sendBtn","#sumBtn","#saveBtn","#restoreBtn"]) $(b).disabled=busy; }
 
 $("#startBtn").onclick = async ()=>{
   if(busy) return;
-  targetName = sel.options[sel.selectedIndex].dataset.target;
-  messages = [];                       // 空 → 后端用 kickoff 让 A1 开场
-  render(); await callChat();
+  if(messages.length && !confirm("将清空当前对话、重新开始访谈，确定？")) return;
+  targetName = curTarget();
+  messages = [];
+  try{ localStorage.removeItem(lsKey()); }catch(e){}
+  render(); await callChat();              // 空 → 后端 kickoff 让 A1 开场
+};
+$("#restoreBtn").onclick = async ()=>{
+  if(busy) return;
+  status.textContent = "正在恢复…";
+  try{                                     // 先服务端"最后保存的对话"，再回退浏览器缓存
+    const r = await fetch("/api/last?agent="+encodeURIComponent(sel.value));
+    if(r.ok){ const d = await r.json();
+      if(d.messages && d.messages.length){
+        targetName = d.target || curTarget(); messages = d.messages; render(); persist();
+        status.textContent = "已从上次保存（"+(d.saved_at||"")+"）恢复，共 "+messages.length+" 条"; return; } }
+    const n = restoreLocal();
+    status.textContent = n ? ("服务端无存档，已从浏览器缓存恢复 "+n+" 条") : "无法恢复：未找到上次保存的对话记录";
+  }catch(e){
+    const n = restoreLocal();
+    status.textContent = n ? ("已从浏览器缓存恢复 "+n+" 条") : ("无法恢复："+e.message);
+  }
 };
 $("#sendBtn").onclick = async ()=>{
   if(busy) return;
   const t = input.value.trim(); if(!t) return;
-  if(messages.length===0){ status.textContent="请先点「开始 / 重新访谈」"; return; }
-  messages.push({role:"user", content:t}); input.value=""; render(); await callChat();
+  if(messages.length===0){ status.textContent="请先点「开始 / 重新访谈」或「恢复上次保存」"; return; }
+  messages.push({role:"user", content:t}); input.value=""; render(); persist(); await callChat();
 };
 $("#sumBtn").onclick = async ()=>{
   if(busy || messages.length===0) return;
@@ -126,21 +158,29 @@ $("#sumBtn").onclick = async ()=>{
     "请通览我们从这次访谈开头到现在的【完整对话】，把已经聊到的【所有】需求毫无遗漏地整理成结构化需求条目。要求："+
     "①覆盖全程涉及的每一个模块/话题，不要只整理最近一段；②逐条给出 REQ 编号、需求来源、涉众原话（直接引用）、需求提炼、优先级、验收要点；"+
     "③合并重复、补全之前因篇幅被截断的条目；④最后用一句话说明还有哪些模块尚未访谈、建议后续补充。"});
-  render(); await callChat(4096);   // 整理需求给足输出预算，避免截断
+  render(); persist(); await callChat(4096);   // 整理需求给足输出预算，避免截断
 };
 $("#saveBtn").onclick = async ()=>{
   if(messages.length===0){ status.textContent="还没有对话内容"; return; }
   const lines = messages.map(m => (m.role==="user"?("【涉众·"+targetName+"】"):"【A1需求获取】")+"\n"+m.content).join("\n\n");
   const r = await fetch("/api/save",{method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({agent:sel.value, target:targetName, transcript:lines})});
+    body:JSON.stringify({agent:sel.value, target:targetName, transcript:lines, messages:messages})});
   const d = await r.json();
-  status.textContent = d.path ? ("已保存到知识库："+d.path) : ("保存失败："+(d.error||""));
+  status.textContent = d.path ? ("已保存到知识库："+d.path+"（同时存了恢复点）") : ("保存失败："+(d.error||""));
 };
 input.addEventListener("keydown", e=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); $("#sendBtn").click(); }});
+sel.addEventListener("change", ()=>{       // 切换涉众：自动恢复该涉众的本地缓存
+  targetName = curTarget(); messages = []; render();
+  const n = restoreLocal();
+  status.textContent = n ? ("已自动恢复浏览器缓存中该涉众的对话（"+n+" 条）") : "";
+});
 
 (async function init(){
   const items = await (await fetch("/api/agents")).json();
   sel.innerHTML = items.map(it=>`<option value="${it.key}" data-target="${it.target}">${it.target}</option>`).join("");
+  targetName = curTarget();
+  const n = restoreLocal();                // 打开页面即尝试自动恢复（关服务重开也不丢）
+  if(n) status.textContent = "已自动恢复浏览器缓存中的对话（"+n+" 条）；要从服务端最后保存恢复，点「恢复上次保存」";
 })();
 </script>
 </body>

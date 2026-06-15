@@ -16,6 +16,9 @@ node_modules/
 __pycache__/
 *.pyc
 
+# 对话页面运行态会话缓存（恢复用，非交付物）
+wiki/summaries/agents/web/sessions/
+
 # Office / WPS 打开文档时生成的临时锁文件（如 ~$讲义.docx）
 ~$*
 

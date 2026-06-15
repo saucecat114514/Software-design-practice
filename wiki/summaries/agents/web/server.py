@@ -13,6 +13,7 @@ import json
 import sys
 import datetime
 from pathlib import Path
+from urllib.parse import urlparse, parse_qs
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 HERE = Path(__file__).resolve()
@@ -21,6 +22,7 @@ AGENTS_DIR = HERE.parent.parent          # wiki/summaries/agents
 # parents: [0]=web [1]=agents [2]=summaries [3]=wiki [4]=D:\Project
 PROJECT_ROOT = HERE.parents[4]           # D:\Project
 RAW_NOTES = PROJECT_ROOT / "raw" / "notes"
+SESSIONS_DIR = HERE.parent / "sessions"   # web/sessions/：保存最近一次会话 JSON，供恢复（运行态，已 gitignore）
 sys.path.insert(0, str(AGENTS_DIR))
 
 import llm_config  # noqa: E402
@@ -61,6 +63,13 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/api/agents":
             items = [{"key": k, "target": m.TARGET_STAKEHOLDER} for k, m in AGENTS.items()]
             return self._send(200, json.dumps(items, ensure_ascii=False))
+        if self.path.startswith("/api/last"):
+            qs = parse_qs(urlparse(self.path).query)
+            key = (qs.get("agent") or [""])[0]
+            f = SESSIONS_DIR / f"{key}.json"
+            if key and f.exists():
+                return self._send(200, f.read_text(encoding="utf-8"))
+            return self._send(404, json.dumps({"error": "无法恢复：未找到上次保存的对话记录"}, ensure_ascii=False))
         return self._send(404, json.dumps({"error": "not found"}))
 
     def do_POST(self):
@@ -83,6 +92,14 @@ class Handler(BaseHTTPRequestHandler):
                 fn = RAW_NOTES / f"{target}-{ts}-需求记录.md"
                 header = f"# {target} 需求获取记录\n\n- 涉众：{target}\n- 采访方：A1 需求获取智能体\n- 时间：{ts}\n- 来源：A1 对话页面（己方扮涉众，涉众侧由教师 5000 平台 agent 简化代表）\n\n---\n\n"
                 fn.write_text(header + body.get("transcript", ""), encoding="utf-8")
+                # 同时写一份会话 JSON（供"恢复上次保存的对话"），以 agent key 命名，覆盖式更新
+                key = body.get("agent") or target
+                msgs = body.get("messages") or []
+                if msgs:
+                    SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
+                    (SESSIONS_DIR / f"{key}.json").write_text(
+                        json.dumps({"agent": key, "target": target, "saved_at": ts, "messages": msgs}, ensure_ascii=False),
+                        encoding="utf-8")
                 return self._send(200, json.dumps({"path": str(fn)}, ensure_ascii=False))
             return self._send(404, json.dumps({"error": "not found"}))
         except Exception as e:

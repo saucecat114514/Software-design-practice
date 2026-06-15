@@ -1,3 +1,12 @@
+# —— 机密：API 密钥 / 凭证，绝对不能提交到 GitHub ——
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+secrets/
+**/凭证/
+
 # —— 云盘式仓库：尽量少排除，只挡掉真正的噪音文件 ——
 
 # Node 依赖（compile.js 若引入第三方包时产生）

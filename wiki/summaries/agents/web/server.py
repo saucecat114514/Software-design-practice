@@ -81,8 +81,9 @@ class Handler(BaseHTTPRequestHandler):
                     return self._send(400, json.dumps({"error": "unknown agent"}, ensure_ascii=False))
                 convo = body.get("messages") or [{"role": "user", "content": KICKOFF}]
                 msgs = [{"role": "system", "content": agent.system_prompt()}] + convo
-                max_tokens = int(body.get("max_tokens") or 900)   # 整理需求时前端会传更大值
-                reply = llm_config.chat(msgs, max_tokens=max_tokens)
+                # 每轮 2048，截断则自动续写最多 6 轮 → 普通轮/整理需求都能完整输出
+                max_tokens = int(body.get("max_tokens") or 2048)
+                reply = llm_config.chat_complete(msgs, max_tokens=max_tokens)
                 return self._send(200, json.dumps({"reply": reply}, ensure_ascii=False))
             if self.path == "/api/save":
                 agent = AGENTS.get(body.get("agent"))

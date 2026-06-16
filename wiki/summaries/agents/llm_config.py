@@ -64,6 +64,36 @@ def chat(messages, temperature=0.7, max_tokens=1024, timeout=90):
     return data["choices"][0]["message"]["content"]
 
 
+def chat_complete(messages, temperature=0.7, max_tokens=2048, timeout=120, max_rounds=6):
+    """完整版对话调用：若回复因 max_tokens 被截断（finish_reason=="length"），
+    自动追加"接着上文继续"指令续写，拼接成完整文本。返回完整 assistant 文本。
+    """
+    import requests
+
+    if not API_KEY:
+        raise RuntimeError(f"未找到 DEEPSEEK_API_KEY（.env 路径：{ENV_PATH}）")
+    url = BASE_URL.rstrip("/") + "/chat/completions"
+    headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
+    base = list(messages)
+    cont = ("你上一条回复因长度被截断了。请直接从截断处接着输出剩余内容，"
+            "不要重复已经输出的部分，也不要加任何开场白或致歉。")
+    full = ""
+    for _ in range(max_rounds):
+        convo = base if not full else base + [
+            {"role": "assistant", "content": full},
+            {"role": "user", "content": cont},
+        ]
+        payload = {"model": MODEL, "messages": convo, "temperature": temperature,
+                   "max_tokens": max_tokens, "stream": False}
+        resp = requests.post(url, headers=headers, json=payload, timeout=timeout)
+        resp.raise_for_status()
+        choice = resp.json()["choices"][0]
+        full += (choice["message"]["content"] or "")
+        if choice.get("finish_reason") != "length":
+            break
+    return full
+
+
 def get_crew_llm():
     """构建 CrewAI LLM 对象（需 pip install crewai）。"""
     from crewai import LLM

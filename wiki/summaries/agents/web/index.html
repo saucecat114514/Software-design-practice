@@ -53,10 +53,20 @@
     <button id="restoreBtn">恢复上次保存</button>
     <button id="sumBtn">整理需求</button>
     <button id="saveBtn">保存到知识库</button>
+    <label class="sub" style="margin-left:8px;cursor:pointer"><input type="checkbox" id="followupChk" /> 补访模式</label>
   </header>
 
+  <div id="followupBar" style="display:none;background:#fffaf0;border-bottom:1px solid var(--line);padding:10px 18px">
+    <div class="sub" style="margin-bottom:6px">
+      <b>补访模式</b>：A1 只围绕下面这份「待澄清问题清单」逐条追问（不重头问）。可点「载入待澄清问题」自动填入该涉众的补访问题，或自行编辑。补访保存为单独的「补访记录」，不覆盖首访。
+    </div>
+    <textarea id="agenda" placeholder="待澄清问题清单（每行一条，或直接粘贴补访问题清单中该涉众那一节）…"
+      style="width:100%;height:96px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;resize:vertical"></textarea>
+    <button id="loadFollowupBtn" style="margin-top:6px">载入待澄清问题</button>
+  </div>
+
   <main id="chat">
-    <div class="hint">选择要访谈的涉众，点「开始 / 重新访谈」，A1 智能体会先开场提问。<br/>你（扮演涉众）在下方输入框作答，回答内容取自教师 5000 平台对应涉众 agent。</div>
+    <div class="hint">选择要访谈的涉众，点「开始 / 重新访谈」，A1 智能体会先开场提问。<br/>你（扮演涉众）在下方输入框作答，回答内容取自教师 5000 平台对应涉众 agent。<br/>需要补充澄清遗留问题时，勾选右上角「补访模式」。</div>
   </main>
 
   <footer>
@@ -71,16 +81,18 @@
 <script>
 const $ = s => document.querySelector(s);
 const chat = $("#chat"), input = $("#input"), status = $("#status"), sel = $("#agentSel");
+const followupChk = $("#followupChk"), agendaEl = $("#agenda"), followupBar = $("#followupBar");
 let messages = [];      // {role:'user'(涉众)|'assistant'(A1), content}
 let targetName = "";
 let busy = false;
 
 function esc(t){const d=document.createElement("div");d.textContent=t;return d.innerHTML;}
 function curTarget(){ const o = sel.options[sel.selectedIndex]; return o ? o.dataset.target : ""; }
-function lsKey(){ return "a1_chat_" + sel.value; }
-// 每轮对话自动存浏览器本地缓存，关服务/刷新后不丢
+function isFollowup(){ return followupChk.checked; }
+function curMode(){ return isFollowup() ? "补访" : "首访"; }
+// 本地缓存按 涉众+模式 分键，首访/补访互不覆盖
+function lsKey(){ return "a1_chat_" + sel.value + (isFollowup() ? "_补访" : ""); }
 function persist(){ try{ if(sel.value && messages.length) localStorage.setItem(lsKey(), JSON.stringify({target:targetName, messages})); }catch(e){} }
-// 从本地缓存恢复当前涉众对话，返回恢复条数（无则 0）
 function restoreLocal(){
   try{
     const raw = localStorage.getItem(lsKey());
@@ -111,6 +123,7 @@ async function callChat(maxTokens){
   try{
     const payload = {agent:sel.value, messages:messages};
     if(maxTokens) payload.max_tokens = maxTokens;
+    if(isFollowup() && agendaEl.value.trim()) payload.agenda = agendaEl.value.trim();   // 补访提纲
     const r = await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify(payload)});
     const d = await r.json();
@@ -120,25 +133,47 @@ async function callChat(maxTokens){
   }catch(e){ status.textContent = "出错："+e.message; }
   finally{ busy=false; setBusy(); }
 }
-function setBusy(){ for(const b of ["#startBtn","#sendBtn","#sumBtn","#saveBtn","#restoreBtn"]) $(b).disabled=busy; }
+function setBusy(){ for(const b of ["#startBtn","#sendBtn","#sumBtn","#saveBtn","#restoreBtn","#loadFollowupBtn"]) $(b).disabled=busy; }
+
+// 补访模式切换：显示/隐藏提纲面板，并按新模式恢复对应缓存
+followupChk.addEventListener("change", ()=>{
+  followupBar.style.display = isFollowup() ? "block" : "none";
+  messages = []; render();
+  const n = restoreLocal();
+  status.textContent = (isFollowup() ? "已切到补访模式。" : "已切回首访模式。")
+    + (n ? ("自动恢复缓存对话 "+n+" 条。") : (isFollowup() ? "请「载入待澄清问题」或粘贴提纲后开始。" : ""));
+});
+
+// 载入该涉众的补访问题（从 补访问题清单-v1.0.md）
+$("#loadFollowupBtn").onclick = async ()=>{
+  if(busy) return;
+  status.textContent = "载入待澄清问题…";
+  try{
+    const r = await fetch("/api/followup?agent="+encodeURIComponent(sel.value));
+    const d = await r.json();
+    if(d.agenda){ agendaEl.value = d.agenda; status.textContent = "已载入「"+d.target+"」的补访问题，可编辑后点「开始 / 重新访谈」。"; }
+    else { status.textContent = "未找到：" + (d.error||""); }
+  }catch(e){ status.textContent = "载入失败："+e.message; }
+};
 
 $("#startBtn").onclick = async ()=>{
   if(busy) return;
+  if(isFollowup() && !agendaEl.value.trim()){ status.textContent="补访模式：请先「载入待澄清问题」或粘贴提纲"; return; }
   if(messages.length && !confirm("将清空当前对话、重新开始访谈，确定？")) return;
   targetName = curTarget();
   messages = [];
   try{ localStorage.removeItem(lsKey()); }catch(e){}
-  render(); await callChat();              // 空 → 后端 kickoff 让 A1 开场
+  render(); await callChat();              // 空 → 后端 kickoff 让 A1 开场（补访则带提纲）
 };
 $("#restoreBtn").onclick = async ()=>{
   if(busy) return;
   status.textContent = "正在恢复…";
-  try{                                     // 先服务端"最后保存的对话"，再回退浏览器缓存
-    const r = await fetch("/api/last?agent="+encodeURIComponent(sel.value));
+  try{                                     // 按当前模式从服务端取最后保存，再回退浏览器缓存
+    const r = await fetch("/api/last?agent="+encodeURIComponent(sel.value)+"&kind="+encodeURIComponent(curMode()));
     if(r.ok){ const d = await r.json();
       if(d.messages && d.messages.length){
         targetName = d.target || curTarget(); messages = d.messages; render(); persist();
-        status.textContent = "已从上次保存（"+(d.saved_at||"")+"）恢复，共 "+messages.length+" 条"; return; } }
+        status.textContent = "已从上次保存（"+(d.saved_at||"")+"，"+(d.kind||curMode())+"）恢复，共 "+messages.length+" 条"; return; } }
     const n = restoreLocal();
     status.textContent = n ? ("服务端无存档，已从浏览器缓存恢复 "+n+" 条") : "无法恢复：未找到上次保存的对话记录";
   }catch(e){
@@ -154,25 +189,27 @@ $("#sendBtn").onclick = async ()=>{
 };
 $("#sumBtn").onclick = async ()=>{
   if(busy || messages.length===0) return;
-  messages.push({role:"user", content:
-    "请通览我们从这次访谈开头到现在的【完整对话】，把已经聊到的【所有】需求毫无遗漏地整理成结构化需求条目。要求："+
-    "①覆盖全程涉及的每一个模块/话题，不要只整理最近一段；②逐条给出 REQ 编号、需求来源、涉众原话（直接引用）、需求提炼、优先级、验收要点；"+
-    "③合并重复、补全之前因篇幅被截断的条目；④最后用一句话说明还有哪些模块尚未访谈、建议后续补充。"});
-  render(); persist(); await callChat(4096);   // 整理需求给足输出预算，避免截断
+  const prompt = isFollowup()
+    ? "请把本次补访中已澄清的内容整理成结构化结论：逐条给出 涉及的原 REQ/ISSUE 编号、澄清前的疑点、涉众明确的答复（含具体数字/规则）、对需求的修订建议。最后说明清单里还有哪些未澄清。"
+    : "请通览我们从这次访谈开头到现在的【完整对话】，把已经聊到的【所有】需求毫无遗漏地整理成结构化需求条目。要求：①覆盖全程涉及的每一个模块/话题，不要只整理最近一段；②逐条给出 REQ 编号、需求来源、涉众原话（直接引用）、需求提炼、优先级、验收要点；③合并重复、补全之前因篇幅被截断的条目；④最后用一句话说明还有哪些模块尚未访谈、建议后续补充。";
+  messages.push({role:"user", content:prompt});
+  render(); persist(); await callChat(4096);   // 给足输出预算，避免截断
 };
 $("#saveBtn").onclick = async ()=>{
   if(messages.length===0){ status.textContent="还没有对话内容"; return; }
   const lines = messages.map(m => (m.role==="user"?("【涉众·"+targetName+"】"):"【A1需求获取】")+"\n"+m.content).join("\n\n");
   const r = await fetch("/api/save",{method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({agent:sel.value, target:targetName, transcript:lines, messages:messages})});
+    body:JSON.stringify({agent:sel.value, target:targetName, kind:curMode(), transcript:lines, messages:messages})});
   const d = await r.json();
-  status.textContent = d.path ? ("已保存到知识库："+d.path+"（同时存了恢复点）") : ("保存失败："+(d.error||""));
+  status.textContent = d.path ? ("已保存到知识库（"+(d.kind||curMode())+"）："+d.path) : ("保存失败："+(d.error||""));
 };
 input.addEventListener("keydown", e=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); $("#sendBtn").click(); }});
-sel.addEventListener("change", ()=>{       // 切换涉众：自动恢复该涉众的本地缓存
+sel.addEventListener("change", ()=>{       // 切换涉众：清空、按当前模式恢复缓存；补访则清空提纲待重新载入
   targetName = curTarget(); messages = []; render();
+  if(isFollowup()) agendaEl.value = "";
   const n = restoreLocal();
-  status.textContent = n ? ("已自动恢复浏览器缓存中该涉众的对话（"+n+" 条）") : "";
+  status.textContent = n ? ("已自动恢复浏览器缓存中该涉众的对话（"+n+" 条）")
+    : (isFollowup() ? "补访模式：请「载入待澄清问题」或粘贴提纲。" : "");
 });
 
 (async function init(){

@@ -19,6 +19,9 @@ __pycache__/
 # 对话页面运行态会话缓存（恢复用，非交付物）
 wiki/summaries/agents/web/sessions/
 
+# SRS 分章中间产物（最终拼装为 SRS-初稿，分章不入库避免重复）
+wiki/summaries/srs_parts/
+
 # Office / WPS 打开文档时生成的临时锁文件（如 ~$讲义.docx）
 ~$*
 

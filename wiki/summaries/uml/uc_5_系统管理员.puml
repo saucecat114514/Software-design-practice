@@ -1,0 +1,68 @@
+@startuml
+skinparam defaultFontName "Microsoft YaHei"
+skinparam dpi 130
+left to right direction
+
+actor "系统管理员" as SystemAdmin
+actor "校长" as Principal
+actor "支付渠道" as PaymentChannel <<外部系统>>
+actor "业务角色" as BusinessRole <<被授权对象>>
+
+rectangle "系统管理子系统" {
+  ' REQ-ORG-001
+  usecase "管理组织架构" as UC_ManageOrg
+  ' REQ-ORG-002, REQ-ACC-003
+  usecase "管理角色与权限" as UC_ManageRole
+  ' REQ-ACC-001, REQ-ACC-002
+  usecase "管理权限模板" as UC_ManageTemplate
+  ' REQ-ACC-001
+  usecase "批量授权用户" as UC_BatchAuth
+  ' REQ-BIZ-001, REQ-BIZ-002, REQ-BIZ-003
+  usecase "配置业务政策" as UC_ConfigPolicy
+  ' REQ-BIZ-002
+  usecase "模拟试算" as UC_SimulatePolicy
+  ' REQ-DR-001, REQ-DR-002, REQ-DR-003
+  usecase "管理灾备与恢复" as UC_ManageDR
+  ' REQ-DR-002
+  usecase "执行恢复演练" as UC_DRTest
+  ' REQ-AUDIT-001
+  usecase "查看审计日志" as UC_ViewAudit
+  ' REQ-SEC-001, REQ-SEC-002, REQ-SEC-003
+  usecase "管理安全策略" as UC_ManageSecurity
+  ' REQ-PAY-001, REQ-PAY-002
+  usecase "处理支付异常与对账" as UC_HandlePayment
+  ' REQ-PAY-001
+  usecase "自动对账与单边账" as UC_AutoReconcile
+}
+
+' 系统管理员关联
+SystemAdmin --> UC_ManageOrg
+SystemAdmin --> UC_ManageRole
+SystemAdmin --> UC_ManageTemplate
+SystemAdmin --> UC_ConfigPolicy
+SystemAdmin --> UC_ManageDR
+SystemAdmin --> UC_ViewAudit
+SystemAdmin --> UC_ManageSecurity
+SystemAdmin --> UC_HandlePayment
+
+' 校长关联（审阅政策与安全简报）
+' 校长可审阅政策配置
+Principal --> UC_ConfigPolicy
+' 校长可查看审计日志与安全日报
+Principal --> UC_ViewAudit
+
+' 支付渠道参与自动对账（外部触发或接口调用）
+PaymentChannel --> UC_AutoReconcile
+
+' 业务角色作为被授权对象的泛化（可选：校长也可被授权，但此处校长独立）
+' 校长也是一种业务角色
+Principal -|> BusinessRole
+
+' 用例关系
+UC_ManageTemplate <. UC_BatchAuth : <<include>>
+UC_ConfigPolicy <. UC_SimulatePolicy : <<extend>>
+UC_ManageDR <. UC_DRTest : <<include>>
+UC_HandlePayment <. UC_AutoReconcile : <<include>>
+' 高危操作告警扩展自审计日志查看
+UC_ManageSecurity <. UC_ViewAudit : <<extend>>
+@enduml

@@ -1,0 +1,81 @@
+@startuml
+left to right direction
+skinparam defaultFontName "Microsoft YaHei"
+skinparam dpi 130
+
+actor "教务老师" as Admin
+actor "授课教师" as Teacher
+actor "家长" as Parent
+actor "校区主管/校长" as Manager
+actor "第三方财务系统" as FinSys <<外部系统>>
+
+rectangle "教务管理子系统" {
+  ' REQ-SCH-003
+  usecase "维护学员不可用时段" as UC1
+  ' REQ-SCH-001,002
+  usecase "管理排课与冲突检测" as UC2
+  ' REQ-SCH-004
+  usecase "强制覆盖不可用时段" as UC2_ext
+  ' REQ-CLS-001,003,004
+  usecase "管理班级容量与候补" as UC3
+  ' REQ-CLS-002
+  usecase "办理候补转正式" as UC4
+  ' REQ-ATT-001,002,003
+  usecase "教师全员签到" as UC5
+  ' REQ-ATT-001
+  usecase "家长扫码签到" as UC6
+  ' REQ-ATT-004,005
+  usecase "提交请假申请" as UC7
+  ' REQ-ATT-006,007
+  usecase "修改考勤记录" as UC8
+  ' REQ-ATT-006
+  usecase "审批跨日考勤修改" as UC8_ext
+  ' REQ-MAKEUP-001,002,003
+  usecase "管理补课" as UC9
+  ' REQ-TRF-001
+  usecase "提交转班申请" as UC10
+  ' REQ-TRF-002,003,004,005,006
+  usecase "确认转班费用" as UC11
+  ' REQ-RSCH-001,002,003,004,005
+  usecase "执行调课操作" as UC12
+  ' REQ-RSCH-006
+  usecase "查看空档推荐" as UC13
+  ' REQ-TCH-001,002,003,004, REQ-RPT-001,002,003
+  usecase "查看教务报表" as UC14
+  ' REQ-REF-001, TRF-006, FIN-001
+  usecase "办理退费" as UC15
+  ' REQ-MCAM-001
+  usecase "管理多校区数据" as UC16
+
+  Admin --> UC1
+  Admin --> UC2
+  Admin --> UC3
+  Admin --> UC4
+  Admin --> UC9
+  Admin --> UC12
+  Admin --> UC14
+  Admin --> UC15
+  Admin --> UC16
+
+  Parent --> UC1
+  Parent --> UC6
+  Parent --> UC7
+  Parent --> UC10
+  Parent --> UC11
+
+  Teacher --> UC5
+  Teacher --> UC8
+  Teacher --> UC10
+
+  Manager --> UC8_ext
+  Manager --> UC15
+
+  UC2 <.. UC2_ext : <<extend>>
+  UC8 <.. UC8_ext : <<extend>>
+  UC12 <.. UC13 : <<extend>>
+  UC15 ..> FinSys : <<include>>
+  UC14 ..> FinSys : <<include>>
+
+  Manager -|> Admin
+}
+@enduml

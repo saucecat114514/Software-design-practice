@@ -1,0 +1,57 @@
+@startuml
+left to right direction
+skinparam defaultFontName "Microsoft YaHei"
+skinparam dpi 130
+
+actor "课程顾问" as Consultant
+actor "校区主管" as Manager
+actor "支付渠道" as PaymentGateway <<外部系统>>
+
+rectangle "招生与客户管理子系统" {
+  ' REQ-CRM-001,002,004,005
+  usecase "查询客户画像与历史" as UC_QueryProfile
+  ' REQ-CRM-003
+  usecase "录入客户线索" as UC_EnterLead
+  ' REQ-CRM-006
+  usecase "标注客户意向等级" as UC_SetIntentLevel
+  ' REQ-TRIAL-001
+  usecase "查看试听名额" as UC_ViewTrialSlots
+  ' REQ-TRIAL-002
+  usecase "锁定试听名额" as UC_LockTrial
+  ' REQ-TRIAL-004
+  usecase "处理锁定冲突推荐" as UC_ConflictRec
+  ' REQ-TRIAL-003,009
+  usecase "改期/取消试听" as UC_Reschedule
+  ' REQ-TRIAL-005,006,007,008
+  usecase "管理候补队列" as UC_ManageWaitlist
+   ' REQ-ORDER-001,002,004
+   usecase "计算优惠与报价" as UC_CalcPrice
+  ' REQ-ORDER-004
+  usecase "匹配转介绍优惠" as UC_MatchReferral
+  ' REQ-ORDER-002,003
+  usecase "发起特批审批" as UC_RequestApproval
+  ' REQ-ORDER-003
+  usecase "审批特批申请" as UC_ApproveRequest
+  ' REQ-ORDER-005
+  usecase "统一收款" as UC_CollectPayment
+
+  Consultant --> UC_QueryProfile
+  Consultant --> UC_EnterLead
+  Consultant --> UC_SetIntentLevel
+  Consultant --> UC_ViewTrialSlots
+  Consultant --> UC_LockTrial
+  Consultant --> UC_Reschedule
+  Consultant --> UC_ManageWaitlist
+  Consultant --> UC_CalcPrice
+  Consultant --> UC_RequestApproval
+  Consultant --> UC_CollectPayment
+
+  UC_LockTrial ..> UC_ConflictRec : <<extend>>
+  UC_Reschedule ..> UC_ManageWaitlist : <<extend>>
+  UC_CalcPrice ..> UC_MatchReferral : <<include>>
+  UC_CalcPrice ..> UC_RequestApproval : <<extend>>
+  UC_RequestApproval ..> UC_ApproveRequest : <<include>>
+  Manager --> UC_ApproveRequest
+  UC_CollectPayment --> PaymentGateway
+}
+@enduml

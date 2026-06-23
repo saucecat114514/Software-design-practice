@@ -1,0 +1,208 @@
+{
+  "name": "工作流1·需求开发全流程（A1→A6 + CCB 人工审批）",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "node-trigger",
+      "name": "手动触发·一键启动",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-1120, 360]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "project", "value": "EDU·教育培训机构教务收费管理系统" },
+            { "name": "stakeholders", "value": "课程顾问,教务老师,财务人员,校长,系统管理员" },
+            { "name": "llm", "value": "deepseek-v4-pro" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-init",
+      "name": "初始化配置（项目/涉众/LLM）",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [-900, 360]
+    },
+    {
+      "parameters": {
+        "command": "python wiki/summaries/agents/web/server.py  # A1：启动对话页面，与教师 5000 平台 5 个涉众 agent 对话，记录落 raw/notes/"
+      },
+      "id": "node-a1",
+      "name": "A1 需求获取（5 涉众·采访方）",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [-680, 360]
+    },
+    {
+      "parameters": {
+        "command": "python wiki/summaries/agents/run_analysis.py  # A2：去重合并→需求清单 + 四维质量检测→问题清单/回退记录"
+      },
+      "id": "node-a2",
+      "name": "A2 需求分析（四维质量检测）",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [-460, 360]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            { "value1": "={{ $json[\"has_issue\"] }}", "operation": "equal", "value2": "yes" }
+          ]
+        }
+      },
+      "id": "node-if-a2",
+      "name": "IF：检出模糊/冲突？",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [-240, 360]
+    },
+    {
+      "parameters": {
+        "command": "python wiki/summaries/agents/run_followup_integration.py  # 回退环：补访整合→问题清单 v2.0（澄清/待CCB）"
+      },
+      "id": "node-followup",
+      "name": "回退补访 + A2 整合（A1↔涉众）",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [-240, 140]
+    },
+    {
+      "parameters": {
+        "command": "python wiki/summaries/agents/run_modeling.py all  # A3：6 用例图 + 6 核心活动图（PlantUML，Guard 显式化）"
+      },
+      "id": "node-a3",
+      "name": "A3 建模（用例图/活动图）",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [0, 360]
+    },
+    {
+      "parameters": {
+        "command": "python wiki/summaries/agents/run_srs.py all  # A4：IEEE830/GB9385 分章生成→拼装 SRS 初稿"
+      },
+      "id": "node-a4",
+      "name": "A4 生成 SRS（IEEE 830）",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [220, 360]
+    },
+    {
+      "parameters": {
+        "command": "python wiki/summaries/agents/run_verification.py all  # A5：程序确定性检查 + 逐子系统语义验证→验证报告"
+      },
+      "id": "node-a5",
+      "name": "A5 交叉验证",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [440, 360]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            { "value1": "={{ $json[\"verify_pass\"] }}", "operation": "equal", "value2": "yes" }
+          ]
+        }
+      },
+      "id": "node-if-a5",
+      "name": "IF：A5 验证通过？",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [660, 360]
+    },
+    {
+      "parameters": {
+        "command": "python wiki/summaries/agents/run_verification.py revise  # 回退环：据验证报告修订 SRS→v0.2，再回 A4 重拼装"
+      },
+      "id": "node-revise",
+      "name": "回退修订 SRS（→A4）",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [660, 580]
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "options": {}
+      },
+      "id": "node-ccb",
+      "name": "CCB 人工审批（Webhook 暂停）",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [880, 360],
+      "webhookId": "ccb-approval-edu-rdev-001"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            { "value1": "={{ $json[\"ccb_decision\"] }}", "operation": "equal", "value2": "approve" }
+          ]
+        }
+      },
+      "id": "node-if-ccb",
+      "name": "IF：CCB 通过？",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1100, 360]
+    },
+    {
+      "parameters": {
+        "command": "python wiki/summaries/agents/run_baseline.py  # A6：生成 22 列 RTM + 冻结基线包 BL-YYYYMMDD-NN"
+      },
+      "id": "node-a6",
+      "name": "A6 创立基线 + RTM",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1320, 360]
+    },
+    {
+      "parameters": {},
+      "id": "node-archive",
+      "name": "归档基线 + 通知涉众（完成）",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1540, 360]
+    }
+  ],
+  "connections": {
+    "手动触发·一键启动": { "main": [[{ "node": "初始化配置（项目/涉众/LLM）", "type": "main", "index": 0 }]] },
+    "初始化配置（项目/涉众/LLM）": { "main": [[{ "node": "A1 需求获取（5 涉众·采访方）", "type": "main", "index": 0 }]] },
+    "A1 需求获取（5 涉众·采访方）": { "main": [[{ "node": "A2 需求分析（四维质量检测）", "type": "main", "index": 0 }]] },
+    "A2 需求分析（四维质量检测）": { "main": [[{ "node": "IF：检出模糊/冲突？", "type": "main", "index": 0 }]] },
+    "IF：检出模糊/冲突？": {
+      "main": [
+        [{ "node": "回退补访 + A2 整合（A1↔涉众）", "type": "main", "index": 0 }],
+        [{ "node": "A3 建模（用例图/活动图）", "type": "main", "index": 0 }]
+      ]
+    },
+    "回退补访 + A2 整合（A1↔涉众）": { "main": [[{ "node": "A3 建模（用例图/活动图）", "type": "main", "index": 0 }]] },
+    "A3 建模（用例图/活动图）": { "main": [[{ "node": "A4 生成 SRS（IEEE 830）", "type": "main", "index": 0 }]] },
+    "A4 生成 SRS（IEEE 830）": { "main": [[{ "node": "A5 交叉验证", "type": "main", "index": 0 }]] },
+    "A5 交叉验证": { "main": [[{ "node": "IF：A5 验证通过？", "type": "main", "index": 0 }]] },
+    "IF：A5 验证通过？": {
+      "main": [
+        [{ "node": "CCB 人工审批（Webhook 暂停）", "type": "main", "index": 0 }],
+        [{ "node": "回退修订 SRS（→A4）", "type": "main", "index": 0 }]
+      ]
+    },
+    "回退修订 SRS（→A4）": { "main": [[{ "node": "A4 生成 SRS（IEEE 830）", "type": "main", "index": 0 }]] },
+    "CCB 人工审批（Webhook 暂停）": { "main": [[{ "node": "IF：CCB 通过？", "type": "main", "index": 0 }]] },
+    "IF：CCB 通过？": {
+      "main": [
+        [{ "node": "A6 创立基线 + RTM", "type": "main", "index": 0 }],
+        [{ "node": "A2 需求分析（四维质量检测）", "type": "main", "index": 0 }]
+      ]
+    },
+    "A6 创立基线 + RTM": { "main": [[{ "node": "归档基线 + 通知涉众（完成）", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "versionId": "edu-rdev-wf1-v1",
+  "meta": { "templateId": "EDU-requirements-development-pipeline" },
+  "tags": [{ "name": "需求工程" }, { "name": "EDU" }]
+}

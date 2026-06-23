@@ -38,3 +38,6 @@ desktop.ini
 # 临时文件
 *.tmp
 *.log
+
+# 提交包构建产物（由 git archive 从 HEAD 生成，无需入库）
+*.zip

@@ -1,0 +1,99 @@
+@startuml
+skinparam defaultFontName "Microsoft YaHei"
+skinparam dpi 130
+left to right direction
+
+actor "财务人员" as Finance
+actor "教务/销售" as Teaching
+actor "家长" as Parent
+actor "审批人" as Approver
+actor "校长" as Principal
+actor "支付渠道" as PayChannel
+actor "第三方电子发票平台" as InvoicePlatform
+
+rectangle "财务管理子系统" {
+  ' REQ-RECON-001
+  usecase "拉取对账单" as UC_PullBill
+  ' REQ-RECON-002,003,004,005
+  usecase "处理对账异常" as UC_HandleDiff
+  ' REQ-PAY-001
+  usecase "教务认领收款" as UC_ClaimByTeaching
+  ' REQ-PAY-001
+  usecase "审核认领收款" as UC_AuditClaim
+  ' REQ-PAY-002
+  usecase "家长回填付款" as UC_ParentFill
+  ' REQ-PAY-003
+  usecase "发起收款拆分" as UC_SplitRequest
+  ' REQ-PAY-003
+  usecase "审批收款拆分" as UC_SplitApprove
+  ' REQ-REF-001,002,003
+  usecase "发起退费申请" as UC_RefundRequest
+  ' REQ-REF-003,004, INV-003
+  usecase "审批退费" as UC_RefundApprove
+  ' REQ-REV-001,002
+  usecase "管理收入确认规则" as UC_RevenueRule
+  ' REQ-REV-003
+  usecase "调整跨月消课" as UC_AdjustConsume
+  ' REQ-FEE-001,002,003,004
+  usecase "管理欠费催缴策略" as UC_ArrearsStrategy
+  ' REQ-INV-001,002,004
+  usecase "处理发票" as UC_Invoice
+  ' REQ-PAYROLL-001,002,003
+  usecase "核算教师工资" as UC_Payroll
+  ' REQ-RPT-001,003,004
+  usecase "查看经营利润表" as UC_ProfitReport
+  ' REQ-RPT-002,004
+  usecase "分析欠费账龄" as UC_ArrearsReport
+  ' REQ-AUD-001,002
+  usecase "审计与数据追溯" as UC_AuditTrace
+
+  Finance --> UC_PullBill
+  Finance --> UC_HandleDiff
+  Finance --> UC_AuditClaim
+  Finance --> UC_SplitRequest
+  Finance --> UC_RefundRequest
+  Finance --> UC_RevenueRule
+  Finance --> UC_AdjustConsume
+  Finance --> UC_ArrearsStrategy
+  Finance --> UC_Invoice
+  Finance --> UC_Payroll
+  Finance --> UC_ProfitReport
+  Finance --> UC_ArrearsReport
+  Finance --> UC_AuditTrace
+
+  Teaching --> UC_ClaimByTeaching
+
+  Parent --> UC_ParentFill
+
+  Approver --> UC_SplitApprove
+  Approver --> UC_RefundApprove
+
+  PayChannel --> UC_PullBill
+  InvoicePlatform --> UC_Invoice
+
+  ' REQ-REF-003
+  usecase "计算退费金额" as UC_RefundCalc
+  ' REQ-INV-003
+  usecase "校验发票红冲状态" as UC_CheckInvoiceStatus
+  ' REQ-REF-004
+  usecase "生成收入红冲凭证" as UC_GenRedInvoice
+  ' REQ-RECON-005
+  usecase "自动跨日重试" as UC_RetryCrossDay
+  ' REQ-AUD-001
+  usecase "查看操作日志" as UC_ViewLog
+  ' REQ-RPT-004
+  usecase "导出报表" as UC_ExportReport
+
+  UC_RefundRequest ..> UC_RefundCalc : <<include>>
+  UC_RefundApprove ..> UC_CheckInvoiceStatus : <<include>>
+  UC_RefundApprove <.. UC_GenRedInvoice : <<extend>>
+  UC_HandleDiff <.. UC_RetryCrossDay : <<extend>>
+  UC_RefundRequest ..> UC_ViewLog : <<include>>
+  UC_SplitRequest ..> UC_ViewLog : <<include>>
+  UC_HandleDiff ..> UC_ViewLog : <<include>>
+  UC_AuditTrace ..> UC_ViewLog : <<include>>
+  UC_ProfitReport ..> UC_ExportReport : <<include>>
+  UC_ArrearsReport ..> UC_ExportReport : <<include>>
+}
+
+@enduml

@@ -1,0 +1,88 @@
+@startuml
+skinparam defaultFontName "Microsoft YaHei"
+skinparam dpi 130
+
+|课程顾问|
+start
+:录入客户手机号;
+note right: REQ-CRM-001, 3秒内聚合画像
+|系统|
+partition "客户画像聚合与家庭视图" {
+  :聚合客户历史画像（含家庭视图）;
+  note right: REQ-CRM-001/002, 一号多娃
+  if (手机号已有归属顾问?) then (是)
+    :提示归属顾问及摘要;
+    note right: REQ-CRM-003 撞单提醒
+  else (否)
+  endif
+}
+
+|课程顾问|
+:选择目标课程/班级/时段;
+note right: REQ-TRIAL-001, ≤2秒显示剩余名额
+|系统|
+:展示该时段实时剩余名额;
+:校验锁定可行性（含缓冲）;
+note right: REQ-TRIAL-002 + ISSUE-022\n占用 = 前缓冲(5分钟) + 课程时段 + 后缓冲(5分钟)
+
+if (名额充足且无占用冲突?) then (是)
+  |课程顾问|
+  :发起一键锁定;
+  |系统|
+  partition "并发独占锁定" {
+    :执行并发锁定（悲观锁/分布式锁）;
+    if (锁定成功?) then (是)
+      :生成15分钟倒计时;
+      note right: REQ-TRIAL-002, 到期自动释放
+      :推送锁定成功通知（微信优先）;
+      note right: ISSUE-004 统一渠道
+      #FFBBBB:锁定占用名额（含缓冲）;
+      stop
+    else (否，并发冲突)
+      :释放瞬时锁;
+      if (是否自动推荐备选时段?) then (是)
+        #FFBBBB:自动弹窗推荐备选时段;
+        note right: REQ-TRIAL-004\n排序：时间最近>名额最少
+        |课程顾问|
+        if (选择备选时段并重试锁定?) then (是)
+          :跳转至重新选择时段;
+          detach
+        else (否)
+          :进入候补流程;
+          detach
+        endif
+      else (否)
+        :提示冲突并终止;
+        stop
+      endif
+    endif
+  }
+else (否，冲突或满额)
+  |课程顾问|
+  if (是否申请加入候补?) then (是)
+    |系统|
+    partition "候补队列管理" {
+      :自动判断试听类型;
+      if (是付费试听?) then (是)
+        :进入付费试听高级队列;
+        note right: REQ-TRIAL-007, 高级队列优先
+      else (否)
+        :进入普通咨询队列;
+      endif
+      :记录申请时间戳;
+      :手动标注意向优先级（可选）;
+      note right: REQ-TRIAL-008
+      :按规则排序（付费类型 > 紧急度 > 进入时间）;
+      note right: ISSUE-005
+    }
+    stop
+  else (否)
+    :放弃;
+    stop
+  endif
+endif
+
+|系统|
+stop
+
+@enduml

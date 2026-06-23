@@ -1,0 +1,110 @@
+@startuml
+left to right direction
+skinparam defaultFontName "Microsoft YaHei"
+skinparam dpi 130
+
+actor "课程顾问" as Consultant
+actor "教务老师" as AcademicAdmin
+actor "授课教师" as Teacher
+actor "财务人员" as FinancialStaff
+actor "校区主管" as CampusDirector
+actor "校长/集团负责人" as Principal
+actor "系统管理员" as SysAdmin
+actor "家长\n(学生家长端/小程序)" as Parent
+
+Principal --|> CampusDirector
+
+actor "支付渠道" as PaymentChannel <<外部系统>>
+actor "第三方电子发票平台" as EInvoicePlatform <<外部系统>>
+actor "第三方财务系统" as ExternalFinanceSystem <<外部系统>>
+
+rectangle "招生与客户管理子系统" as EnrollmentCRM {
+  usecase "客户画像与家庭视图" as UC_CRM_Profile
+  usecase "试听预约与名额锁定" as UC_CRM_Trial
+  usecase "优惠报价与审批" as UC_CRM_Quote
+  usecase "多渠道缴费" as UC_CRM_Pay
+}
+
+rectangle "教务管理子系统" as Academic {
+  usecase "三维排课与冲突检测" as UC_Acad_Schedule
+  usecase "考勤签到与请假处理" as UC_Acad_Attendance
+  usecase "教师课时费计算" as UC_Acad_FeeCalc
+  usecase "转班与补课管理" as UC_Acad_TransferMakeup
+  usecase "课程容量与候补控制" as UC_Acad_Capacity
+}
+
+rectangle "财务管理子系统" as Finance {
+  usecase "自动对账与待认领" as UC_Fin_Reconcile
+  usecase "退费计算与红冲凭证" as UC_Fin_Refund
+  usecase "收入确认（消课制）" as UC_Fin_Revenue
+  usecase "欠费催缴管理" as UC_Fin_Arrears
+  usecase "电子发票对接" as UC_Fin_Invoice
+}
+
+rectangle "经营管理子系统" as BizMgmt {
+  usecase "核心经营看板与分析" as UC_Biz_Dashboard
+  usecase "招生转化与渠道监控" as UC_Biz_Enroll
+  usecase "运营效能与教师排名" as UC_Biz_OPS
+  usecase "实时课消与财务确认" as UC_Biz_FinView
+  usecase "移动审批与数据权限" as UC_Biz_Approval
+}
+
+rectangle "系统管理子系统" as SystemMgmt {
+  usecase "组织架构与权限管理" as UC_Sys_OrgAuth
+  usecase "业务政策配置与校验" as UC_Sys_BizConfig
+  usecase "数据灾备与恢复" as UC_Sys_DR
+  usecase "审计日志与安全管控" as UC_Sys_AuditSec
+}
+
+Consultant -- UC_CRM_Profile
+Consultant -- UC_CRM_Trial
+Consultant -- UC_CRM_Quote
+Consultant -- UC_CRM_Pay
+
+AcademicAdmin -- UC_Acad_Schedule
+AcademicAdmin -- UC_Acad_Attendance
+AcademicAdmin -- UC_Acad_FeeCalc
+AcademicAdmin -- UC_Acad_TransferMakeup
+AcademicAdmin -- UC_Acad_Capacity
+
+Teacher -- UC_Acad_Attendance
+Teacher -- UC_Acad_FeeCalc
+
+FinancialStaff -- UC_Fin_Reconcile
+FinancialStaff -- UC_Fin_Refund
+FinancialStaff -- UC_Fin_Revenue
+FinancialStaff -- UC_Fin_Arrears
+FinancialStaff -- UC_Fin_Invoice
+
+CampusDirector -- UC_Biz_Dashboard
+CampusDirector -- UC_Biz_Enroll
+CampusDirector -- UC_Biz_OPS
+CampusDirector -- UC_Biz_FinView
+CampusDirector -- UC_Biz_Approval
+
+Principal -- UC_Biz_Dashboard
+Principal -- UC_Biz_Enroll
+Principal -- UC_Biz_OPS
+Principal -- UC_Biz_FinView
+Principal -- UC_Biz_Approval
+
+SysAdmin -- UC_Sys_OrgAuth
+SysAdmin -- UC_Sys_BizConfig
+SysAdmin -- UC_Sys_DR
+SysAdmin -- UC_Sys_AuditSec
+
+Parent -- UC_CRM_Trial
+Parent -- UC_CRM_Pay
+Parent -- UC_Acad_Attendance
+Parent -- UC_Acad_TransferMakeup
+
+PaymentChannel -- UC_CRM_Pay
+PaymentChannel -- UC_Fin_Reconcile
+EInvoicePlatform -- UC_Fin_Invoice
+ExternalFinanceSystem -- UC_Fin_Reconcile
+
+UC_CRM_Pay ..> UC_Fin_Reconcile : <<缴费→对账>>
+UC_Acad_TransferMakeup ..> UC_Acad_FeeCalc : <<调课→课时费>>
+UC_CRM_Profile ..> UC_Fin_Revenue : <<报名→课消>>
+
+@enduml

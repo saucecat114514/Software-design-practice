@@ -1,0 +1,112 @@
+@startuml
+skinparam defaultFontName "Microsoft YaHei"
+skinparam dpi 130
+
+left to right direction
+
+actor "校长/集团负责人" as Principal
+actor "校区主管" as CampusMgr
+actor "课程顾问" as Consultant
+actor "授课教师" as Teacher
+actor "家长" as Parent
+actor "第三方财务系统" as FinSys
+
+rectangle "教务收费管理系统\n[经营管理子系统]" {
+  ' REQ-DASH-001,003
+  usecase "查看核心经营看板" as UC_DashBoard
+  ' REQ-DASH-002
+  usecase "分析指标趋势与同比" as UC_Trend
+  ' REQ-ENROLL-001
+  usecase "管理渠道费用与健康度" as UC_ChHealth
+  ' REQ-ENROLL-002,004
+  usecase "监控待续费与超期未续费" as UC_RenewWarn
+  ' REQ-ENROLL-003,006
+  usecase "分析顾问转化效能" as UC_ConsultPerf
+  ' REQ-ENROLL-005
+  usecase "追踪营销活动效果" as UC_MktTrack
+  ' REQ-APPROVAL-001,002, MOBILE-002
+  usecase "处理关键财务审批" as UC_Approval
+  ' REQ-CAMPUS-001,002
+  usecase "配置分级审批与数据权限" as UC_AuthConfig
+  ' REQ-OPS-001
+  usecase "查看教师效能综合视图" as UC_TeachPerf
+  ' REQ-OPS-002,003
+  usecase "监控班级满班率与请假率" as UC_ClassMonitor
+  ' REQ-FIN-001
+  usecase "查看实时课消与确认收入" as UC_FTConsume
+  ' REQ-FIN-002
+  usecase "监控剩余课时与未消课" as UC_RemainWarn
+  ' REQ-FIN-003, CAMPUS-004
+  usecase "执行日终资金安全对账" as UC_Reconciliation
+  ' REQ-MOBILE-001, MOBILE-002
+  usecase "推送与查看异常预警" as UC_Alert
+  ' REQ-MINI-PROG-001
+  usecase "管理家长端成长档案" as UC_GrowthArc
+  ' REQ-MINI-PROG-002
+  usecase "自助请假与调课" as UC_LeaveAdj
+  ' REQ-MINI-PROG-003
+  usecase "选课报名与实时缴费" as UC_EnrollPay
+
+  ' 关系梳理
+  CampusMgr <|- Principal
+  Principal --> UC_DashBoard
+  Principal --> UC_Trend
+  Principal --> UC_ChHealth
+  Principal --> UC_RenewWarn
+  Principal --> UC_ConsultPerf
+  Principal --> UC_MktTrack
+  Principal --> UC_Approval
+  Principal --> UC_AuthConfig
+  Principal --> UC_TeachPerf
+  Principal --> UC_ClassMonitor
+  Principal --> UC_FTConsume
+  Principal --> UC_RemainWarn
+  Principal --> UC_Reconciliation
+  Principal --> UC_Alert
+  Principal --> UC_GrowthArc
+
+  CampusMgr --> UC_DashBoard
+  CampusMgr --> UC_TeachPerf
+  CampusMgr --> UC_ClassMonitor
+  CampusMgr --> UC_Approval
+
+  Consultant --> UC_ConsultPerf
+
+  Teacher --> UC_TeachPerf
+
+  Parent --> UC_LeaveAdj
+  Parent --> UC_EnrollPay
+  Parent --> UC_GrowthArc
+
+  FinSys --> UC_ChHealth
+
+  ' <<include>> 公共流程
+  ' REQ-DASH-001, ENROLL-002, etc.
+  usecase "钻取明细数据" as UC_DrillDown
+  UC_DashBoard ..> UC_DrillDown : <<include>>
+  UC_RenewWarn ..> UC_DrillDown : <<include>>
+  UC_ClassMonitor ..> UC_DrillDown : <<include>>
+  UC_FTConsume ..> UC_DrillDown : <<include>>
+  UC_RemainWarn ..> UC_DrillDown : <<include>>
+  UC_Reconciliation ..> UC_DrillDown : <<include>>
+
+  ' REQ-MOBILE-001
+  usecase "推送预警通知" as UC_PushAlert
+  UC_RenewWarn ..> UC_PushAlert : <<extend>>
+  UC_ClassMonitor ..> UC_PushAlert : <<extend>>
+  UC_FTConsume ..> UC_PushAlert : <<extend>>
+  UC_RemainWarn ..> UC_PushAlert : <<extend>>
+  UC_Reconciliation ..> UC_PushAlert : <<extend>>
+  UC_Alert ..> UC_PushAlert : <<include>>
+
+  ' REQ-OPS-002, FIN-002, MOBILE-001
+  usecase "配置预警阈值" as UC_ThresConfig
+  UC_ClassMonitor ..> UC_ThresConfig : <<include>>
+  UC_RemainWarn ..> UC_ThresConfig : <<include>>
+  UC_Alert ..> UC_ThresConfig : <<include>>
+
+  ' REQ-CAMPUS-002
+  usecase "分级流程升级" as UC_Escalate
+  UC_Approval <.. UC_Escalate : <<extend>>
+}
+@enduml

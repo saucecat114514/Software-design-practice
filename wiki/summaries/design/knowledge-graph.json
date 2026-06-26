@@ -1,0 +1,2241 @@
+{
+  "meta": {
+    "graph_id": "KG-EDU-V1",
+    "title": "教育培训机构教务收费管理系统 · 需求正向知识图谱",
+    "source_baseline": "BL-20260623-01",
+    "generated_from": "RTM_BL-20260623-01_需求溯源矩阵.md",
+    "generator": "build_knowledge_graph.py（确定性解析，无 LLM）",
+    "node_total": 78,
+    "edge_total": 228
+  },
+  "metrics": {
+    "fr_count": 88,
+    "ifr_count": 5,
+    "nfr_count": 17,
+    "component_count": 37,
+    "subsystem_count": 6,
+    "interface_count": 5,
+    "constraint_count": 25,
+    "base_module_count": 10,
+    "node_total": 78,
+    "edge_total": 228,
+    "by_subsystem": {
+      "招生与客户管理": {
+        "components": 3,
+        "fr": 13
+      },
+      "教务管理": {
+        "components": 10,
+        "fr": 21
+      },
+      "系统管理": {
+        "components": 7,
+        "fr": 14
+      },
+      "经营管理": {
+        "components": 7,
+        "fr": 15
+      },
+      "综合": {
+        "components": 1,
+        "fr": 1
+      },
+      "财务管理": {
+        "components": 9,
+        "fr": 24
+      }
+    },
+    "capacity": {
+      "用户规模": "约 500 用户",
+      "并发": "约 100 并发",
+      "关键响应": "报名/缴费/查名额 ≤3s（试听 P99≤3s，目标≤1s）",
+      "可用性目标": "灾备 RTO 30min / RPO≈5min",
+      "部署": "阿里云单体部署（实训本机等效）"
+    },
+    "five_dimension_inputs": {
+      "功能复杂度": "88 FR + 5 IFR 跨 37 业务组件 / 6 子系统，以 CRUD+审批+对账类事务为主，非算法密集",
+      "并发性能": "约 100 并发、约 500 用户；关键路径 报名/缴费/查名额 ≤3s（试听 P99≤3s，目标≤1s）；无超高并发/秒杀级诉求",
+      "可扩展性": "多校区数据隔离+汇总、规则可配置化（CCB 8 项量化约束多为可配），水平扩展诉求中等",
+      "团队规模": "1 人全量执行（AI 辅助），无多团队并行开发诉求",
+      "运维能力": "阿里云单体部署（实训本机等效）；灾备 RTO 30min / RPO≈5min；无独立 SRE/复杂分布式运维条件"
+    }
+  },
+  "nodes": [
+    {
+      "id": "SYS-EDU",
+      "type": "System",
+      "name": "教育培训机构教务收费管理系统",
+      "capacity": {
+        "用户规模": "约 500 用户",
+        "并发": "约 100 并发",
+        "关键响应": "报名/缴费/查名额 ≤3s（试听 P99≤3s，目标≤1s）",
+        "可用性目标": "灾备 RTO 30min / RPO≈5min",
+        "部署": "阿里云单体部署（实训本机等效）"
+      },
+      "provenance": "SRS §3.3 / 作战计划 §7"
+    },
+    {
+      "id": "COMP-CRM",
+      "type": "Component",
+      "code": "CRM",
+      "name": "客户线索与画像",
+      "subsystem": "招生与客户管理",
+      "br": "BR-EDU-001",
+      "dev_service": "crm-service",
+      "realizes": [
+        "FR-CRM-001",
+        "FR-CRM-002",
+        "FR-CRM-003"
+      ],
+      "models": [
+        "uc_1_课程顾问"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 3
+    },
+    {
+      "id": "COMP-ORDER",
+      "type": "Component",
+      "code": "ORDER",
+      "name": "报名订单与优惠",
+      "subsystem": "招生与客户管理",
+      "br": "BR-EDU-002",
+      "dev_service": "crm-service",
+      "realizes": [
+        "FR-ORDER-001",
+        "FR-ORDER-002",
+        "FR-ORDER-003",
+        "FR-ORDER-004",
+        "FR-ORDER-005"
+      ],
+      "models": [
+        "act_01_报名优惠算价与审批",
+        "uc_1_课程顾问"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 5
+    },
+    {
+      "id": "COMP-TRIAL",
+      "type": "Component",
+      "code": "TRIAL",
+      "name": "试听名额与候补",
+      "subsystem": "招生与客户管理",
+      "br": "BR-EDU-001",
+      "dev_service": "crm-service",
+      "realizes": [
+        "FR-TRIAL-001",
+        "FR-TRIAL-002",
+        "FR-TRIAL-003",
+        "FR-TRIAL-004",
+        "FR-TRIAL-005"
+      ],
+      "models": [
+        "act_02_试听锁定与候补",
+        "uc_1_课程顾问"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 5
+    },
+    {
+      "id": "COMP-ATT",
+      "type": "Component",
+      "code": "ATT",
+      "name": "考勤与课时扣减",
+      "subsystem": "教务管理",
+      "br": "BR-EDU-003",
+      "dev_service": "academic-service",
+      "realizes": [
+        "FR-ATT-001",
+        "FR-ATT-002",
+        "FR-ATT-003",
+        "FR-ATT-004",
+        "FR-ATT-005"
+      ],
+      "models": [
+        "act_04_考勤与课时扣减",
+        "uc_2_教务老师"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 5
+    },
+    {
+      "id": "COMP-CLS",
+      "type": "Component",
+      "code": "CLS",
+      "name": "班级容量与候补",
+      "subsystem": "教务管理",
+      "br": "BR-EDU-003",
+      "dev_service": "academic-service",
+      "realizes": [
+        "FR-CLS-001",
+        "FR-CLS-002"
+      ],
+      "models": [
+        "uc_2_教务老师"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 2
+    },
+    {
+      "id": "COMP-FIN",
+      "type": "Component",
+      "code": "FIN",
+      "name": "课消与课时费",
+      "subsystem": "教务管理",
+      "br": "BR-EDU-004",
+      "dev_service": "academic-service",
+      "realizes": [
+        "FR-FIN-001",
+        "FR-FIN-002",
+        "FR-FIN-003"
+      ],
+      "models": [
+        "uc_2_教务老师"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 3
+    },
+    {
+      "id": "COMP-MAKEUP",
+      "type": "Component",
+      "code": "MAKEUP",
+      "name": "补课额度管理",
+      "subsystem": "教务管理",
+      "br": "BR-EDU-003",
+      "dev_service": "academic-service",
+      "realizes": [
+        "FR-MAKEUP-001"
+      ],
+      "models": [
+        "uc_2_教务老师"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 1
+    },
+    {
+      "id": "COMP-MCAM",
+      "type": "Component",
+      "code": "MCAM",
+      "name": "多校区数据",
+      "subsystem": "教务管理",
+      "br": "BR-EDU-003",
+      "dev_service": "academic-service",
+      "realizes": [
+        "FR-MCAM-001"
+      ],
+      "models": [
+        "uc_2_教务老师"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 1
+    },
+    {
+      "id": "COMP-RSCH",
+      "type": "Component",
+      "code": "RSCH",
+      "name": "调课管理",
+      "subsystem": "教务管理",
+      "br": "BR-EDU-003",
+      "dev_service": "academic-service",
+      "realizes": [
+        "FR-RSCH-001",
+        "FR-RSCH-002"
+      ],
+      "models": [
+        "act_03_排课冲突检测",
+        "uc_2_教务老师"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 2
+    },
+    {
+      "id": "COMP-SCH",
+      "type": "Component",
+      "code": "SCH",
+      "name": "排课与冲突检测",
+      "subsystem": "教务管理",
+      "br": "BR-EDU-003",
+      "dev_service": "academic-service",
+      "realizes": [
+        "FR-SCH-001",
+        "FR-SCH-002",
+        "FR-SCH-003"
+      ],
+      "models": [
+        "act_03_排课冲突检测",
+        "uc_2_教务老师"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 3
+    },
+    {
+      "id": "COMP-TREF",
+      "type": "Component",
+      "code": "TREF",
+      "name": "教务退费",
+      "subsystem": "教务管理",
+      "br": "BR-EDU-005",
+      "dev_service": "academic-service",
+      "realizes": [
+        "FR-TREF-001"
+      ],
+      "models": [
+        "act_05_退费计算与审批",
+        "uc_2_教务老师"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 1
+    },
+    {
+      "id": "COMP-TRF",
+      "type": "Component",
+      "code": "TRF",
+      "name": "转班与费用",
+      "subsystem": "教务管理",
+      "br": "BR-EDU-005",
+      "dev_service": "academic-service",
+      "realizes": [
+        "FR-TRF-001",
+        "FR-TRF-002"
+      ],
+      "models": [
+        "uc_2_教务老师"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 2
+    },
+    {
+      "id": "COMP-TRP",
+      "type": "Component",
+      "code": "TRP",
+      "name": "教务报表",
+      "subsystem": "教务管理",
+      "br": "BR-EDU-003",
+      "dev_service": "academic-service",
+      "realizes": [
+        "FR-TRP-001"
+      ],
+      "models": [
+        "uc_2_教务老师"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 1
+    },
+    {
+      "id": "COMP-ACC",
+      "type": "Component",
+      "code": "ACC",
+      "name": "权限模板与授权",
+      "subsystem": "系统管理",
+      "br": "BR-EDU-008",
+      "dev_service": "admin-service",
+      "realizes": [
+        "FR-ACC-001",
+        "FR-ACC-002"
+      ],
+      "models": [
+        "uc_5_系统管理员"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 2
+    },
+    {
+      "id": "COMP-AUDIT",
+      "type": "Component",
+      "code": "AUDIT",
+      "name": "审计日志",
+      "subsystem": "系统管理",
+      "br": "BR-EDU-008",
+      "dev_service": "admin-service",
+      "realizes": [
+        "FR-AUDIT-001"
+      ],
+      "models": [
+        "uc_5_系统管理员"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 1
+    },
+    {
+      "id": "COMP-BIZ",
+      "type": "Component",
+      "code": "BIZ",
+      "name": "业务规则配置",
+      "subsystem": "系统管理",
+      "br": "BR-EDU-008",
+      "dev_service": "admin-service",
+      "realizes": [
+        "FR-BIZ-001",
+        "FR-BIZ-002",
+        "FR-BIZ-003"
+      ],
+      "models": [
+        "uc_5_系统管理员"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 3
+    },
+    {
+      "id": "COMP-DR",
+      "type": "Component",
+      "code": "DR",
+      "name": "灾备与恢复",
+      "subsystem": "系统管理",
+      "br": "BR-EDU-008",
+      "dev_service": "admin-service",
+      "realizes": [
+        "FR-DR-001",
+        "FR-DR-002",
+        "FR-DR-003"
+      ],
+      "models": [
+        "uc_5_系统管理员"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 3
+    },
+    {
+      "id": "COMP-ORG",
+      "type": "Component",
+      "code": "ORG",
+      "name": "组织架构",
+      "subsystem": "系统管理",
+      "br": "BR-EDU-008",
+      "dev_service": "admin-service",
+      "realizes": [
+        "FR-ORG-001",
+        "FR-ORG-002"
+      ],
+      "models": [
+        "uc_5_系统管理员"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 2
+    },
+    {
+      "id": "COMP-PAYIF",
+      "type": "Component",
+      "code": "PAYIF",
+      "name": "支付接口兜底",
+      "subsystem": "系统管理",
+      "br": "BR-EDU-008",
+      "dev_service": "admin-service",
+      "realizes": [
+        "FR-PAYIF-001"
+      ],
+      "models": [
+        "act_06_日终对账",
+        "uc_5_系统管理员"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 1
+    },
+    {
+      "id": "COMP-SEC",
+      "type": "Component",
+      "code": "SEC",
+      "name": "安全策略与告警",
+      "subsystem": "系统管理",
+      "br": "BR-EDU-008",
+      "dev_service": "admin-service",
+      "realizes": [
+        "FR-SEC-001",
+        "FR-SEC-002"
+      ],
+      "models": [
+        "uc_5_系统管理员"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 2
+    },
+    {
+      "id": "COMP-APPROVAL",
+      "type": "Component",
+      "code": "APPROVAL",
+      "name": "关键财务审批",
+      "subsystem": "经营管理",
+      "br": "BR-EDU-007",
+      "dev_service": "bi-service",
+      "realizes": [
+        "FR-APPROVAL-001"
+      ],
+      "models": [
+        "uc_4_校长"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 1
+    },
+    {
+      "id": "COMP-CAMPUS",
+      "type": "Component",
+      "code": "CAMPUS",
+      "name": "分级审批与数据权限",
+      "subsystem": "经营管理",
+      "br": "BR-EDU-007",
+      "dev_service": "bi-service",
+      "realizes": [
+        "FR-CAMPUS-001",
+        "FR-CAMPUS-002"
+      ],
+      "models": [
+        "uc_4_校长"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 2
+    },
+    {
+      "id": "COMP-DASH",
+      "type": "Component",
+      "code": "DASH",
+      "name": "经营看板",
+      "subsystem": "经营管理",
+      "br": "BR-EDU-007",
+      "dev_service": "bi-service",
+      "realizes": [
+        "FR-DASH-001",
+        "FR-DASH-002"
+      ],
+      "models": [
+        "uc_4_校长"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 2
+    },
+    {
+      "id": "COMP-ENROLL",
+      "type": "Component",
+      "code": "ENROLL",
+      "name": "招生渠道分析",
+      "subsystem": "经营管理",
+      "br": "BR-EDU-007",
+      "dev_service": "bi-service",
+      "realizes": [
+        "FR-ENROLL-001",
+        "FR-ENROLL-002",
+        "FR-ENROLL-003",
+        "FR-ENROLL-004"
+      ],
+      "models": [
+        "uc_4_校长"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 4
+    },
+    {
+      "id": "COMP-FMN",
+      "type": "Component",
+      "code": "FMN",
+      "name": "实时课消监控",
+      "subsystem": "经营管理",
+      "br": "BR-EDU-007",
+      "dev_service": "bi-service",
+      "realizes": [
+        "FR-FMN-001"
+      ],
+      "models": [
+        "uc_4_校长"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 1
+    },
+    {
+      "id": "COMP-MINI",
+      "type": "Component",
+      "code": "MINI",
+      "name": "家长端与小程序",
+      "subsystem": "经营管理",
+      "br": "BR-EDU-001",
+      "dev_service": "bi-service",
+      "realizes": [
+        "FR-MINI-001",
+        "FR-MINI-002",
+        "FR-MINI-003"
+      ],
+      "models": [
+        "uc_4_校长"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 3
+    },
+    {
+      "id": "COMP-OPS",
+      "type": "Component",
+      "code": "OPS",
+      "name": "教师效能与满班率",
+      "subsystem": "经营管理",
+      "br": "BR-EDU-007",
+      "dev_service": "bi-service",
+      "realizes": [
+        "FR-OPS-001",
+        "FR-OPS-002"
+      ],
+      "models": [
+        "uc_4_校长"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 2
+    },
+    {
+      "id": "COMP-ALERT",
+      "type": "Component",
+      "code": "ALERT",
+      "name": "异常预警中心",
+      "subsystem": "综合",
+      "br": "BR-EDU-008",
+      "dev_service": "platform-common",
+      "realizes": [
+        "FR-ALERT-001"
+      ],
+      "models": [],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 1
+    },
+    {
+      "id": "COMP-AUD",
+      "type": "Component",
+      "code": "AUD",
+      "name": "财务审计追溯",
+      "subsystem": "财务管理",
+      "br": "BR-EDU-008",
+      "dev_service": "finance-service",
+      "realizes": [
+        "FR-AUD-001"
+      ],
+      "models": [
+        "uc_3_财务人员"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 1
+    },
+    {
+      "id": "COMP-FEE",
+      "type": "Component",
+      "code": "FEE",
+      "name": "欠费续费催缴",
+      "subsystem": "财务管理",
+      "br": "BR-EDU-006",
+      "dev_service": "finance-service",
+      "realizes": [
+        "FR-FEE-001"
+      ],
+      "models": [
+        "uc_3_财务人员"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 1
+    },
+    {
+      "id": "COMP-FRP",
+      "type": "Component",
+      "code": "FRP",
+      "name": "经营利润报表",
+      "subsystem": "财务管理",
+      "br": "BR-EDU-007",
+      "dev_service": "finance-service",
+      "realizes": [
+        "FR-FRP-001",
+        "FR-FRP-002",
+        "FR-FRP-003",
+        "FR-FRP-004"
+      ],
+      "models": [
+        "uc_3_财务人员"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 4
+    },
+    {
+      "id": "COMP-INV",
+      "type": "Component",
+      "code": "INV",
+      "name": "发票管理",
+      "subsystem": "财务管理",
+      "br": "BR-EDU-005",
+      "dev_service": "finance-service",
+      "realizes": [
+        "FR-INV-001"
+      ],
+      "models": [
+        "act_05_退费计算与审批",
+        "uc_3_财务人员"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 1
+    },
+    {
+      "id": "COMP-PAY",
+      "type": "Component",
+      "code": "PAY",
+      "name": "收款认领与拆分",
+      "subsystem": "财务管理",
+      "br": "BR-EDU-006",
+      "dev_service": "finance-service",
+      "realizes": [
+        "FR-PAY-001",
+        "FR-PAY-002",
+        "FR-PAY-003",
+        "FR-PAY-004",
+        "FR-PAY-005"
+      ],
+      "models": [
+        "act_06_日终对账",
+        "uc_3_财务人员"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 5
+    },
+    {
+      "id": "COMP-PAYROLL",
+      "type": "Component",
+      "code": "PAYROLL",
+      "name": "教师工资核算",
+      "subsystem": "财务管理",
+      "br": "BR-EDU-004",
+      "dev_service": "finance-service",
+      "realizes": [
+        "FR-PAYROLL-001"
+      ],
+      "models": [
+        "uc_3_财务人员"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 1
+    },
+    {
+      "id": "COMP-RECON",
+      "type": "Component",
+      "code": "RECON",
+      "name": "支付对账",
+      "subsystem": "财务管理",
+      "br": "BR-EDU-006",
+      "dev_service": "finance-service",
+      "realizes": [
+        "FR-RECON-001",
+        "FR-RECON-002",
+        "FR-RECON-003",
+        "FR-RECON-004",
+        "FR-RECON-005"
+      ],
+      "models": [
+        "act_06_日终对账",
+        "uc_3_财务人员"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 5
+    },
+    {
+      "id": "COMP-REF",
+      "type": "Component",
+      "code": "REF",
+      "name": "退费计算与审批",
+      "subsystem": "财务管理",
+      "br": "BR-EDU-005",
+      "dev_service": "finance-service",
+      "realizes": [
+        "FR-REF-001",
+        "FR-REF-002",
+        "FR-REF-003",
+        "FR-REF-004",
+        "FR-REF-005"
+      ],
+      "models": [
+        "act_05_退费计算与审批",
+        "uc_3_财务人员"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 5
+    },
+    {
+      "id": "COMP-REV",
+      "type": "Component",
+      "code": "REV",
+      "name": "收入确认",
+      "subsystem": "财务管理",
+      "br": "BR-EDU-004",
+      "dev_service": "finance-service",
+      "realizes": [
+        "FR-REV-001"
+      ],
+      "models": [
+        "act_04_考勤与课时扣减",
+        "uc_3_财务人员"
+      ],
+      "provenance": "RTM/功能需求聚合",
+      "fr_count": 1
+    },
+    {
+      "id": "IFR-PAY-001",
+      "type": "Interface",
+      "name": "支付渠道回调与主动查单兜底",
+      "boundary": "外部第三方/系统集成",
+      "subsystem": "财务管理",
+      "br": "BR-EDU-006",
+      "provenance": "RTM/接口需求"
+    },
+    {
+      "id": "IFR-INV-001",
+      "type": "Interface",
+      "name": "第三方电子发票平台开票/红冲接口",
+      "boundary": "外部第三方/系统集成",
+      "subsystem": "财务管理",
+      "br": "BR-EDU-005",
+      "provenance": "RTM/接口需求"
+    },
+    {
+      "id": "IFR-FIN-001",
+      "type": "Interface",
+      "name": "第三方财务系统对接接口",
+      "boundary": "外部第三方/系统集成",
+      "subsystem": "教务管理",
+      "br": "BR-EDU-004",
+      "provenance": "RTM/接口需求"
+    },
+    {
+      "id": "IFR-MSG-001",
+      "type": "Interface",
+      "name": "统一通知接口",
+      "boundary": "外部第三方/系统集成",
+      "subsystem": "综合",
+      "br": "BR-EDU-008",
+      "provenance": "RTM/接口需求"
+    },
+    {
+      "id": "IFR-MINI-001",
+      "type": "Interface",
+      "name": "家长小程序数据实时同步接口",
+      "boundary": "外部第三方/系统集成",
+      "subsystem": "经营管理",
+      "br": "BR-EDU-001",
+      "provenance": "RTM/接口需求"
+    },
+    {
+      "id": "NFR-PERF-001",
+      "type": "Constraint",
+      "name": "手机号3秒聚合客户历史画像",
+      "category": "性能",
+      "scope": "全局",
+      "provenance": "RTM/非功能需求"
+    },
+    {
+      "id": "NFR-PERF-002",
+      "type": "Constraint",
+      "name": "试听名额实时可见",
+      "category": "性能",
+      "scope": "全局",
+      "provenance": "RTM/非功能需求"
+    },
+    {
+      "id": "NFR-SEC-001",
+      "type": "Constraint",
+      "name": "支付接口及对账操作的审计留痕",
+      "category": "安全",
+      "scope": "全局",
+      "provenance": "RTM/非功能需求"
+    },
+    {
+      "id": "NFR-REL-001",
+      "type": "Constraint",
+      "name": "全链路操作留痕与不可篡改日志",
+      "category": "可靠性",
+      "scope": "全局",
+      "provenance": "RTM/非功能需求"
+    },
+    {
+      "id": "NFR-REL-002",
+      "type": "Constraint",
+      "name": "财务数据至少保留三年可查可导",
+      "category": "可靠性",
+      "scope": "全局",
+      "provenance": "RTM/非功能需求"
+    },
+    {
+      "id": "NFR-PERF-003",
+      "type": "Constraint",
+      "name": "周末数据聚合与数据刷新频率控制",
+      "category": "性能",
+      "scope": "全局",
+      "provenance": "RTM/非功能需求"
+    },
+    {
+      "id": "NFR-REL-003",
+      "type": "Constraint",
+      "name": "日终自动对账",
+      "category": "可靠性",
+      "scope": "全局",
+      "provenance": "RTM/非功能需求"
+    },
+    {
+      "id": "NFR-SEC-002",
+      "type": "Constraint",
+      "name": "基于角色的跨校区数据权限控制",
+      "category": "安全",
+      "scope": "全局",
+      "provenance": "RTM/非功能需求"
+    },
+    {
+      "id": "NFR-SEC-003",
+      "type": "Constraint",
+      "name": "集团级资金安全对账强制统一",
+      "category": "安全",
+      "scope": "全局",
+      "provenance": "RTM/非功能需求"
+    },
+    {
+      "id": "NFR-PERF-004",
+      "type": "Constraint",
+      "name": "权限模板变更的即时生效",
+      "category": "性能",
+      "scope": "全局",
+      "provenance": "RTM/非功能需求"
+    },
+    {
+      "id": "NFR-REL-004",
+      "type": "Constraint",
+      "name": "核心数据的实时异地灾备与自动切换",
+      "category": "可靠性",
+      "scope": "全局",
+      "provenance": "RTM/非功能需求"
+    },
+    {
+      "id": "NFR-REL-005",
+      "type": "Constraint",
+      "name": "周期性恢复演练与自动报告",
+      "category": "可靠性",
+      "scope": "全局",
+      "provenance": "RTM/非功能需求"
+    },
+    {
+      "id": "NFR-SEC-004",
+      "type": "Constraint",
+      "name": "备份数据的安全管控",
+      "category": "安全",
+      "scope": "全局",
+      "provenance": "RTM/非功能需求"
+    },
+    {
+      "id": "NFR-SEC-005",
+      "type": "Constraint",
+      "name": "全字段不可篡改的审计日志",
+      "category": "安全",
+      "scope": "全局",
+      "provenance": "RTM/非功能需求"
+    },
+    {
+      "id": "NFR-SEC-006",
+      "type": "Constraint",
+      "name": "强安全策略执行",
+      "category": "安全",
+      "scope": "全局",
+      "provenance": "RTM/非功能需求"
+    },
+    {
+      "id": "NFR-SEC-007",
+      "type": "Constraint",
+      "name": "高风险角色的双因素认证",
+      "category": "安全",
+      "scope": "全局",
+      "provenance": "RTM/非功能需求"
+    },
+    {
+      "id": "NFR-SEC-008",
+      "type": "Constraint",
+      "name": "高危操作实时告警与安全日报",
+      "category": "安全",
+      "scope": "全局",
+      "provenance": "RTM/非功能需求"
+    },
+    {
+      "id": "CON-CCB-001",
+      "type": "Constraint",
+      "name": "排课/试听占用缓冲",
+      "category": "业务量化(CCB)",
+      "value": "默认5分钟，可配[1~30]",
+      "arch_impact": "可配置化/规则引擎",
+      "scope": "全局",
+      "provenance": "CCB评审记录/二节备案终裁"
+    },
+    {
+      "id": "CON-CCB-002",
+      "type": "Constraint",
+      "name": "赠送课时退费折价系数",
+      "category": "业务量化(CCB)",
+      "value": "默认1.0，可配[0~1]",
+      "arch_impact": "参数快照冻结",
+      "scope": "全局",
+      "provenance": "CCB评审记录/二节备案终裁"
+    },
+    {
+      "id": "CON-CCB-003",
+      "type": "Constraint",
+      "name": "发票自动开票审核阈值",
+      "category": "业务量化(CCB)",
+      "value": "默认5000元，可配",
+      "arch_impact": "可配置化",
+      "scope": "全局",
+      "provenance": "CCB评审记录/二节备案终裁"
+    },
+    {
+      "id": "CON-CCB-004",
+      "type": "Constraint",
+      "name": "续费提醒参数",
+      "category": "业务量化(CCB)",
+      "value": "提前7天/间隔3天/最多3次",
+      "arch_impact": "定时任务+可配置",
+      "scope": "全局",
+      "provenance": "CCB评审记录/二节备案终裁"
+    },
+    {
+      "id": "CON-CCB-005",
+      "type": "Constraint",
+      "name": "班级请假率预警阈值",
+      "category": "业务量化(CCB)",
+      "value": "单周20%/单月30%",
+      "arch_impact": "实时监控+告警",
+      "scope": "全局",
+      "provenance": "CCB评审记录/二节备案终裁"
+    },
+    {
+      "id": "CON-CCB-006",
+      "type": "Constraint",
+      "name": "核心库灾备 RTO",
+      "category": "业务量化(CCB)",
+      "value": "30分钟切换/零丢失",
+      "arch_impact": "异地灾备/高可用",
+      "scope": "全局",
+      "provenance": "CCB评审记录/二节备案终裁"
+    },
+    {
+      "id": "CON-CCB-007",
+      "type": "Constraint",
+      "name": "退费分级审批",
+      "category": "业务量化(CCB)",
+      "value": "三级强制，大额绝不自动通过",
+      "arch_impact": "审批流+权限",
+      "scope": "全局",
+      "provenance": "CCB评审记录/二节备案终裁"
+    },
+    {
+      "id": "CON-CCB-008",
+      "type": "Constraint",
+      "name": "试听名额并发独占",
+      "category": "业务量化(CCB)",
+      "value": "锁定独占+15分钟倒计时释放",
+      "arch_impact": "并发控制/分布式锁",
+      "scope": "全局",
+      "provenance": "CCB评审记录/二节备案终裁"
+    },
+    {
+      "id": "BASE-GATEWAY",
+      "type": "BaseModule",
+      "name": "支付网关",
+      "kind": "通用基础",
+      "provenance": "作战计划 §7 通用/业务基础模块"
+    },
+    {
+      "id": "BASE-INTEGRATION",
+      "type": "BaseModule",
+      "name": "第三方对接(短信/电票/小程序)",
+      "kind": "通用基础",
+      "provenance": "作战计划 §7 通用/业务基础模块"
+    },
+    {
+      "id": "BASE-CACHE",
+      "type": "BaseModule",
+      "name": "缓存",
+      "kind": "通用基础",
+      "provenance": "作战计划 §7 通用/业务基础模块"
+    },
+    {
+      "id": "BASE-SCHED",
+      "type": "BaseModule",
+      "name": "定时任务(对账/催缴/灾备演练)",
+      "kind": "通用基础",
+      "provenance": "作战计划 §7 通用/业务基础模块"
+    },
+    {
+      "id": "BASE-NOTIFY",
+      "type": "BaseModule",
+      "name": "通知中心",
+      "kind": "业务基础",
+      "provenance": "作战计划 §7 通用/业务基础模块"
+    },
+    {
+      "id": "BASE-APPROVAL",
+      "type": "BaseModule",
+      "name": "审批流引擎",
+      "kind": "业务基础",
+      "provenance": "作战计划 §7 通用/业务基础模块"
+    },
+    {
+      "id": "BASE-RBAC",
+      "type": "BaseModule",
+      "name": "账号权限(RBAC×校区)",
+      "kind": "业务基础",
+      "provenance": "作战计划 §7 通用/业务基础模块"
+    },
+    {
+      "id": "BASE-AUDIT",
+      "type": "BaseModule",
+      "name": "日志审计",
+      "kind": "业务基础",
+      "provenance": "作战计划 §7 通用/业务基础模块"
+    },
+    {
+      "id": "BASE-ORG",
+      "type": "BaseModule",
+      "name": "校区组织隔离",
+      "kind": "业务基础",
+      "provenance": "作战计划 §7 通用/业务基础模块"
+    },
+    {
+      "id": "BASE-CONFIG",
+      "type": "BaseModule",
+      "name": "系统参数配置",
+      "kind": "业务基础",
+      "provenance": "作战计划 §7 通用/业务基础模块"
+    }
+  ],
+  "edges": [
+    {
+      "from": "COMP-CRM",
+      "rel": "realizes",
+      "to": "FR-CRM-001"
+    },
+    {
+      "from": "COMP-CRM",
+      "rel": "traces_to",
+      "to": "BR-EDU-001"
+    },
+    {
+      "from": "COMP-CRM",
+      "rel": "realizes",
+      "to": "FR-CRM-002"
+    },
+    {
+      "from": "COMP-CRM",
+      "rel": "traces_to",
+      "to": "BR-EDU-001"
+    },
+    {
+      "from": "COMP-CRM",
+      "rel": "realizes",
+      "to": "FR-CRM-003"
+    },
+    {
+      "from": "COMP-CRM",
+      "rel": "traces_to",
+      "to": "BR-EDU-001"
+    },
+    {
+      "from": "COMP-TRIAL",
+      "rel": "realizes",
+      "to": "FR-TRIAL-001"
+    },
+    {
+      "from": "COMP-TRIAL",
+      "rel": "traces_to",
+      "to": "BR-EDU-001"
+    },
+    {
+      "from": "COMP-TRIAL",
+      "rel": "realizes",
+      "to": "FR-TRIAL-002"
+    },
+    {
+      "from": "COMP-TRIAL",
+      "rel": "traces_to",
+      "to": "BR-EDU-001"
+    },
+    {
+      "from": "COMP-TRIAL",
+      "rel": "realizes",
+      "to": "FR-TRIAL-003"
+    },
+    {
+      "from": "COMP-TRIAL",
+      "rel": "traces_to",
+      "to": "BR-EDU-001"
+    },
+    {
+      "from": "COMP-TRIAL",
+      "rel": "realizes",
+      "to": "FR-TRIAL-004"
+    },
+    {
+      "from": "COMP-TRIAL",
+      "rel": "traces_to",
+      "to": "BR-EDU-001"
+    },
+    {
+      "from": "COMP-TRIAL",
+      "rel": "realizes",
+      "to": "FR-TRIAL-005"
+    },
+    {
+      "from": "COMP-TRIAL",
+      "rel": "traces_to",
+      "to": "BR-EDU-001"
+    },
+    {
+      "from": "COMP-ORDER",
+      "rel": "realizes",
+      "to": "FR-ORDER-001"
+    },
+    {
+      "from": "COMP-ORDER",
+      "rel": "traces_to",
+      "to": "BR-EDU-002"
+    },
+    {
+      "from": "COMP-ORDER",
+      "rel": "realizes",
+      "to": "FR-ORDER-002"
+    },
+    {
+      "from": "COMP-ORDER",
+      "rel": "traces_to",
+      "to": "BR-EDU-002"
+    },
+    {
+      "from": "COMP-ORDER",
+      "rel": "realizes",
+      "to": "FR-ORDER-003"
+    },
+    {
+      "from": "COMP-ORDER",
+      "rel": "traces_to",
+      "to": "BR-EDU-002"
+    },
+    {
+      "from": "COMP-ORDER",
+      "rel": "realizes",
+      "to": "FR-ORDER-004"
+    },
+    {
+      "from": "COMP-ORDER",
+      "rel": "traces_to",
+      "to": "BR-EDU-002"
+    },
+    {
+      "from": "COMP-ORDER",
+      "rel": "realizes",
+      "to": "FR-ORDER-005"
+    },
+    {
+      "from": "COMP-ORDER",
+      "rel": "traces_to",
+      "to": "BR-EDU-002"
+    },
+    {
+      "from": "COMP-SCH",
+      "rel": "realizes",
+      "to": "FR-SCH-001"
+    },
+    {
+      "from": "COMP-SCH",
+      "rel": "traces_to",
+      "to": "BR-EDU-003"
+    },
+    {
+      "from": "COMP-SCH",
+      "rel": "realizes",
+      "to": "FR-SCH-002"
+    },
+    {
+      "from": "COMP-SCH",
+      "rel": "traces_to",
+      "to": "BR-EDU-003"
+    },
+    {
+      "from": "COMP-SCH",
+      "rel": "realizes",
+      "to": "FR-SCH-003"
+    },
+    {
+      "from": "COMP-SCH",
+      "rel": "traces_to",
+      "to": "BR-EDU-003"
+    },
+    {
+      "from": "COMP-CLS",
+      "rel": "realizes",
+      "to": "FR-CLS-001"
+    },
+    {
+      "from": "COMP-CLS",
+      "rel": "traces_to",
+      "to": "BR-EDU-003"
+    },
+    {
+      "from": "COMP-CLS",
+      "rel": "realizes",
+      "to": "FR-CLS-002"
+    },
+    {
+      "from": "COMP-CLS",
+      "rel": "traces_to",
+      "to": "BR-EDU-003"
+    },
+    {
+      "from": "COMP-ATT",
+      "rel": "realizes",
+      "to": "FR-ATT-001"
+    },
+    {
+      "from": "COMP-ATT",
+      "rel": "traces_to",
+      "to": "BR-EDU-003"
+    },
+    {
+      "from": "COMP-ATT",
+      "rel": "realizes",
+      "to": "FR-ATT-002"
+    },
+    {
+      "from": "COMP-ATT",
+      "rel": "traces_to",
+      "to": "BR-EDU-003"
+    },
+    {
+      "from": "COMP-ATT",
+      "rel": "realizes",
+      "to": "FR-ATT-003"
+    },
+    {
+      "from": "COMP-ATT",
+      "rel": "traces_to",
+      "to": "BR-EDU-003"
+    },
+    {
+      "from": "COMP-ATT",
+      "rel": "realizes",
+      "to": "FR-ATT-004"
+    },
+    {
+      "from": "COMP-ATT",
+      "rel": "traces_to",
+      "to": "BR-EDU-003"
+    },
+    {
+      "from": "COMP-ATT",
+      "rel": "realizes",
+      "to": "FR-ATT-005"
+    },
+    {
+      "from": "COMP-ATT",
+      "rel": "traces_to",
+      "to": "BR-EDU-003"
+    },
+    {
+      "from": "COMP-MAKEUP",
+      "rel": "realizes",
+      "to": "FR-MAKEUP-001"
+    },
+    {
+      "from": "COMP-MAKEUP",
+      "rel": "traces_to",
+      "to": "BR-EDU-003"
+    },
+    {
+      "from": "COMP-TRF",
+      "rel": "realizes",
+      "to": "FR-TRF-001"
+    },
+    {
+      "from": "COMP-TRF",
+      "rel": "traces_to",
+      "to": "BR-EDU-005"
+    },
+    {
+      "from": "COMP-TRF",
+      "rel": "realizes",
+      "to": "FR-TRF-002"
+    },
+    {
+      "from": "COMP-TRF",
+      "rel": "traces_to",
+      "to": "BR-EDU-005"
+    },
+    {
+      "from": "COMP-RSCH",
+      "rel": "realizes",
+      "to": "FR-RSCH-001"
+    },
+    {
+      "from": "COMP-RSCH",
+      "rel": "traces_to",
+      "to": "BR-EDU-003"
+    },
+    {
+      "from": "COMP-RSCH",
+      "rel": "realizes",
+      "to": "FR-RSCH-002"
+    },
+    {
+      "from": "COMP-RSCH",
+      "rel": "traces_to",
+      "to": "BR-EDU-003"
+    },
+    {
+      "from": "COMP-TRP",
+      "rel": "realizes",
+      "to": "FR-TRP-001"
+    },
+    {
+      "from": "COMP-TRP",
+      "rel": "traces_to",
+      "to": "BR-EDU-003"
+    },
+    {
+      "from": "COMP-TREF",
+      "rel": "realizes",
+      "to": "FR-TREF-001"
+    },
+    {
+      "from": "COMP-TREF",
+      "rel": "traces_to",
+      "to": "BR-EDU-005"
+    },
+    {
+      "from": "COMP-MCAM",
+      "rel": "realizes",
+      "to": "FR-MCAM-001"
+    },
+    {
+      "from": "COMP-MCAM",
+      "rel": "traces_to",
+      "to": "BR-EDU-003"
+    },
+    {
+      "from": "COMP-FIN",
+      "rel": "realizes",
+      "to": "FR-FIN-001"
+    },
+    {
+      "from": "COMP-FIN",
+      "rel": "traces_to",
+      "to": "BR-EDU-004"
+    },
+    {
+      "from": "COMP-RECON",
+      "rel": "realizes",
+      "to": "FR-RECON-001"
+    },
+    {
+      "from": "COMP-RECON",
+      "rel": "traces_to",
+      "to": "BR-EDU-006"
+    },
+    {
+      "from": "COMP-RECON",
+      "rel": "realizes",
+      "to": "FR-RECON-002"
+    },
+    {
+      "from": "COMP-RECON",
+      "rel": "traces_to",
+      "to": "BR-EDU-006"
+    },
+    {
+      "from": "COMP-RECON",
+      "rel": "realizes",
+      "to": "FR-RECON-003"
+    },
+    {
+      "from": "COMP-RECON",
+      "rel": "traces_to",
+      "to": "BR-EDU-006"
+    },
+    {
+      "from": "COMP-RECON",
+      "rel": "realizes",
+      "to": "FR-RECON-004"
+    },
+    {
+      "from": "COMP-RECON",
+      "rel": "traces_to",
+      "to": "BR-EDU-006"
+    },
+    {
+      "from": "COMP-RECON",
+      "rel": "realizes",
+      "to": "FR-RECON-005"
+    },
+    {
+      "from": "COMP-RECON",
+      "rel": "traces_to",
+      "to": "BR-EDU-006"
+    },
+    {
+      "from": "COMP-PAY",
+      "rel": "realizes",
+      "to": "FR-PAY-001"
+    },
+    {
+      "from": "COMP-PAY",
+      "rel": "traces_to",
+      "to": "BR-EDU-006"
+    },
+    {
+      "from": "COMP-PAY",
+      "rel": "realizes",
+      "to": "FR-PAY-002"
+    },
+    {
+      "from": "COMP-PAY",
+      "rel": "traces_to",
+      "to": "BR-EDU-006"
+    },
+    {
+      "from": "COMP-PAY",
+      "rel": "realizes",
+      "to": "FR-PAY-003"
+    },
+    {
+      "from": "COMP-PAY",
+      "rel": "traces_to",
+      "to": "BR-EDU-006"
+    },
+    {
+      "from": "COMP-PAY",
+      "rel": "realizes",
+      "to": "FR-PAY-004"
+    },
+    {
+      "from": "COMP-PAY",
+      "rel": "traces_to",
+      "to": "BR-EDU-006"
+    },
+    {
+      "from": "COMP-PAY",
+      "rel": "realizes",
+      "to": "FR-PAY-005"
+    },
+    {
+      "from": "COMP-PAY",
+      "rel": "traces_to",
+      "to": "BR-EDU-006"
+    },
+    {
+      "from": "COMP-REF",
+      "rel": "realizes",
+      "to": "FR-REF-001"
+    },
+    {
+      "from": "COMP-REF",
+      "rel": "traces_to",
+      "to": "BR-EDU-005"
+    },
+    {
+      "from": "COMP-REF",
+      "rel": "realizes",
+      "to": "FR-REF-002"
+    },
+    {
+      "from": "COMP-REF",
+      "rel": "traces_to",
+      "to": "BR-EDU-005"
+    },
+    {
+      "from": "COMP-REF",
+      "rel": "realizes",
+      "to": "FR-REF-003"
+    },
+    {
+      "from": "COMP-REF",
+      "rel": "traces_to",
+      "to": "BR-EDU-005"
+    },
+    {
+      "from": "COMP-REF",
+      "rel": "realizes",
+      "to": "FR-REF-004"
+    },
+    {
+      "from": "COMP-REF",
+      "rel": "traces_to",
+      "to": "BR-EDU-005"
+    },
+    {
+      "from": "COMP-REF",
+      "rel": "realizes",
+      "to": "FR-REF-005"
+    },
+    {
+      "from": "COMP-REF",
+      "rel": "traces_to",
+      "to": "BR-EDU-005"
+    },
+    {
+      "from": "COMP-REV",
+      "rel": "realizes",
+      "to": "FR-REV-001"
+    },
+    {
+      "from": "COMP-REV",
+      "rel": "traces_to",
+      "to": "BR-EDU-004"
+    },
+    {
+      "from": "COMP-FEE",
+      "rel": "realizes",
+      "to": "FR-FEE-001"
+    },
+    {
+      "from": "COMP-FEE",
+      "rel": "traces_to",
+      "to": "BR-EDU-006"
+    },
+    {
+      "from": "COMP-INV",
+      "rel": "realizes",
+      "to": "FR-INV-001"
+    },
+    {
+      "from": "COMP-INV",
+      "rel": "traces_to",
+      "to": "BR-EDU-005"
+    },
+    {
+      "from": "COMP-PAYROLL",
+      "rel": "realizes",
+      "to": "FR-PAYROLL-001"
+    },
+    {
+      "from": "COMP-PAYROLL",
+      "rel": "traces_to",
+      "to": "BR-EDU-004"
+    },
+    {
+      "from": "COMP-FRP",
+      "rel": "realizes",
+      "to": "FR-FRP-001"
+    },
+    {
+      "from": "COMP-FRP",
+      "rel": "traces_to",
+      "to": "BR-EDU-007"
+    },
+    {
+      "from": "COMP-FRP",
+      "rel": "realizes",
+      "to": "FR-FRP-002"
+    },
+    {
+      "from": "COMP-FRP",
+      "rel": "traces_to",
+      "to": "BR-EDU-007"
+    },
+    {
+      "from": "COMP-FRP",
+      "rel": "realizes",
+      "to": "FR-FRP-003"
+    },
+    {
+      "from": "COMP-FRP",
+      "rel": "traces_to",
+      "to": "BR-EDU-007"
+    },
+    {
+      "from": "COMP-FRP",
+      "rel": "realizes",
+      "to": "FR-FRP-004"
+    },
+    {
+      "from": "COMP-FRP",
+      "rel": "traces_to",
+      "to": "BR-EDU-007"
+    },
+    {
+      "from": "COMP-AUD",
+      "rel": "realizes",
+      "to": "FR-AUD-001"
+    },
+    {
+      "from": "COMP-AUD",
+      "rel": "traces_to",
+      "to": "BR-EDU-008"
+    },
+    {
+      "from": "COMP-DASH",
+      "rel": "realizes",
+      "to": "FR-DASH-001"
+    },
+    {
+      "from": "COMP-DASH",
+      "rel": "traces_to",
+      "to": "BR-EDU-007"
+    },
+    {
+      "from": "COMP-DASH",
+      "rel": "realizes",
+      "to": "FR-DASH-002"
+    },
+    {
+      "from": "COMP-DASH",
+      "rel": "traces_to",
+      "to": "BR-EDU-007"
+    },
+    {
+      "from": "COMP-ENROLL",
+      "rel": "realizes",
+      "to": "FR-ENROLL-001"
+    },
+    {
+      "from": "COMP-ENROLL",
+      "rel": "traces_to",
+      "to": "BR-EDU-007"
+    },
+    {
+      "from": "COMP-ENROLL",
+      "rel": "realizes",
+      "to": "FR-ENROLL-002"
+    },
+    {
+      "from": "COMP-ENROLL",
+      "rel": "traces_to",
+      "to": "BR-EDU-007"
+    },
+    {
+      "from": "COMP-ENROLL",
+      "rel": "realizes",
+      "to": "FR-ENROLL-003"
+    },
+    {
+      "from": "COMP-ENROLL",
+      "rel": "traces_to",
+      "to": "BR-EDU-007"
+    },
+    {
+      "from": "COMP-ENROLL",
+      "rel": "realizes",
+      "to": "FR-ENROLL-004"
+    },
+    {
+      "from": "COMP-ENROLL",
+      "rel": "traces_to",
+      "to": "BR-EDU-007"
+    },
+    {
+      "from": "COMP-CAMPUS",
+      "rel": "realizes",
+      "to": "FR-CAMPUS-001"
+    },
+    {
+      "from": "COMP-CAMPUS",
+      "rel": "traces_to",
+      "to": "BR-EDU-007"
+    },
+    {
+      "from": "COMP-OPS",
+      "rel": "realizes",
+      "to": "FR-OPS-001"
+    },
+    {
+      "from": "COMP-OPS",
+      "rel": "traces_to",
+      "to": "BR-EDU-007"
+    },
+    {
+      "from": "COMP-OPS",
+      "rel": "realizes",
+      "to": "FR-OPS-002"
+    },
+    {
+      "from": "COMP-OPS",
+      "rel": "traces_to",
+      "to": "BR-EDU-007"
+    },
+    {
+      "from": "COMP-FMN",
+      "rel": "realizes",
+      "to": "FR-FMN-001"
+    },
+    {
+      "from": "COMP-FMN",
+      "rel": "traces_to",
+      "to": "BR-EDU-007"
+    },
+    {
+      "from": "COMP-FIN",
+      "rel": "realizes",
+      "to": "FR-FIN-002"
+    },
+    {
+      "from": "COMP-FIN",
+      "rel": "traces_to",
+      "to": "BR-EDU-004"
+    },
+    {
+      "from": "COMP-FIN",
+      "rel": "realizes",
+      "to": "FR-FIN-003"
+    },
+    {
+      "from": "COMP-FIN",
+      "rel": "traces_to",
+      "to": "BR-EDU-004"
+    },
+    {
+      "from": "COMP-APPROVAL",
+      "rel": "realizes",
+      "to": "FR-APPROVAL-001"
+    },
+    {
+      "from": "COMP-APPROVAL",
+      "rel": "traces_to",
+      "to": "BR-EDU-007"
+    },
+    {
+      "from": "COMP-ALERT",
+      "rel": "realizes",
+      "to": "FR-ALERT-001"
+    },
+    {
+      "from": "COMP-ALERT",
+      "rel": "traces_to",
+      "to": "BR-EDU-008"
+    },
+    {
+      "from": "COMP-MINI",
+      "rel": "realizes",
+      "to": "FR-MINI-001"
+    },
+    {
+      "from": "COMP-MINI",
+      "rel": "traces_to",
+      "to": "BR-EDU-001"
+    },
+    {
+      "from": "COMP-MINI",
+      "rel": "realizes",
+      "to": "FR-MINI-002"
+    },
+    {
+      "from": "COMP-MINI",
+      "rel": "traces_to",
+      "to": "BR-EDU-001"
+    },
+    {
+      "from": "COMP-MINI",
+      "rel": "realizes",
+      "to": "FR-MINI-003"
+    },
+    {
+      "from": "COMP-MINI",
+      "rel": "traces_to",
+      "to": "BR-EDU-001"
+    },
+    {
+      "from": "COMP-CAMPUS",
+      "rel": "realizes",
+      "to": "FR-CAMPUS-002"
+    },
+    {
+      "from": "COMP-CAMPUS",
+      "rel": "traces_to",
+      "to": "BR-EDU-007"
+    },
+    {
+      "from": "COMP-ORG",
+      "rel": "realizes",
+      "to": "FR-ORG-001"
+    },
+    {
+      "from": "COMP-ORG",
+      "rel": "traces_to",
+      "to": "BR-EDU-008"
+    },
+    {
+      "from": "COMP-ORG",
+      "rel": "realizes",
+      "to": "FR-ORG-002"
+    },
+    {
+      "from": "COMP-ORG",
+      "rel": "traces_to",
+      "to": "BR-EDU-008"
+    },
+    {
+      "from": "COMP-ACC",
+      "rel": "realizes",
+      "to": "FR-ACC-001"
+    },
+    {
+      "from": "COMP-ACC",
+      "rel": "traces_to",
+      "to": "BR-EDU-008"
+    },
+    {
+      "from": "COMP-ACC",
+      "rel": "realizes",
+      "to": "FR-ACC-002"
+    },
+    {
+      "from": "COMP-ACC",
+      "rel": "traces_to",
+      "to": "BR-EDU-008"
+    },
+    {
+      "from": "COMP-BIZ",
+      "rel": "realizes",
+      "to": "FR-BIZ-001"
+    },
+    {
+      "from": "COMP-BIZ",
+      "rel": "traces_to",
+      "to": "BR-EDU-008"
+    },
+    {
+      "from": "COMP-BIZ",
+      "rel": "realizes",
+      "to": "FR-BIZ-002"
+    },
+    {
+      "from": "COMP-BIZ",
+      "rel": "traces_to",
+      "to": "BR-EDU-008"
+    },
+    {
+      "from": "COMP-BIZ",
+      "rel": "realizes",
+      "to": "FR-BIZ-003"
+    },
+    {
+      "from": "COMP-BIZ",
+      "rel": "traces_to",
+      "to": "BR-EDU-008"
+    },
+    {
+      "from": "COMP-DR",
+      "rel": "realizes",
+      "to": "FR-DR-001"
+    },
+    {
+      "from": "COMP-DR",
+      "rel": "traces_to",
+      "to": "BR-EDU-008"
+    },
+    {
+      "from": "COMP-DR",
+      "rel": "realizes",
+      "to": "FR-DR-002"
+    },
+    {
+      "from": "COMP-DR",
+      "rel": "traces_to",
+      "to": "BR-EDU-008"
+    },
+    {
+      "from": "COMP-DR",
+      "rel": "realizes",
+      "to": "FR-DR-003"
+    },
+    {
+      "from": "COMP-DR",
+      "rel": "traces_to",
+      "to": "BR-EDU-008"
+    },
+    {
+      "from": "COMP-AUDIT",
+      "rel": "realizes",
+      "to": "FR-AUDIT-001"
+    },
+    {
+      "from": "COMP-AUDIT",
+      "rel": "traces_to",
+      "to": "BR-EDU-008"
+    },
+    {
+      "from": "COMP-SEC",
+      "rel": "realizes",
+      "to": "FR-SEC-001"
+    },
+    {
+      "from": "COMP-SEC",
+      "rel": "traces_to",
+      "to": "BR-EDU-008"
+    },
+    {
+      "from": "COMP-SEC",
+      "rel": "realizes",
+      "to": "FR-SEC-002"
+    },
+    {
+      "from": "COMP-SEC",
+      "rel": "traces_to",
+      "to": "BR-EDU-008"
+    },
+    {
+      "from": "COMP-PAYIF",
+      "rel": "realizes",
+      "to": "FR-PAYIF-001"
+    },
+    {
+      "from": "COMP-PAYIF",
+      "rel": "traces_to",
+      "to": "BR-EDU-008"
+    },
+    {
+      "from": "COMP-PAY",
+      "rel": "depends_on",
+      "to": "IFR-PAY-001"
+    },
+    {
+      "from": "COMP-INV",
+      "rel": "depends_on",
+      "to": "IFR-INV-001"
+    },
+    {
+      "from": "COMP-FIN",
+      "rel": "depends_on",
+      "to": "IFR-FIN-001"
+    },
+    {
+      "from": "BASE-NOTIFY",
+      "rel": "depends_on",
+      "to": "IFR-MSG-001"
+    },
+    {
+      "from": "COMP-MINI",
+      "rel": "depends_on",
+      "to": "IFR-MINI-001"
+    },
+    {
+      "from": "COMP-CRM",
+      "rel": "constrained_by",
+      "to": "NFR-PERF-001"
+    },
+    {
+      "from": "COMP-TRIAL",
+      "rel": "constrained_by",
+      "to": "NFR-PERF-002"
+    },
+    {
+      "from": "COMP-PAY",
+      "rel": "constrained_by",
+      "to": "NFR-SEC-001"
+    },
+    {
+      "from": "COMP-AUD",
+      "rel": "constrained_by",
+      "to": "NFR-REL-001"
+    },
+    {
+      "from": "COMP-AUD",
+      "rel": "constrained_by",
+      "to": "NFR-REL-002"
+    },
+    {
+      "from": "COMP-DASH",
+      "rel": "constrained_by",
+      "to": "NFR-PERF-003"
+    },
+    {
+      "from": "COMP-FIN",
+      "rel": "constrained_by",
+      "to": "NFR-REL-003"
+    },
+    {
+      "from": "COMP-CAMPUS",
+      "rel": "constrained_by",
+      "to": "NFR-SEC-002"
+    },
+    {
+      "from": "COMP-CAMPUS",
+      "rel": "constrained_by",
+      "to": "NFR-SEC-003"
+    },
+    {
+      "from": "COMP-ACC",
+      "rel": "constrained_by",
+      "to": "NFR-PERF-004"
+    },
+    {
+      "from": "COMP-DR",
+      "rel": "constrained_by",
+      "to": "NFR-REL-004"
+    },
+    {
+      "from": "COMP-DR",
+      "rel": "constrained_by",
+      "to": "NFR-REL-005"
+    },
+    {
+      "from": "COMP-DR",
+      "rel": "constrained_by",
+      "to": "NFR-SEC-004"
+    },
+    {
+      "from": "COMP-AUDIT",
+      "rel": "constrained_by",
+      "to": "NFR-SEC-005"
+    },
+    {
+      "from": "COMP-SEC",
+      "rel": "constrained_by",
+      "to": "NFR-SEC-006"
+    },
+    {
+      "from": "COMP-SEC",
+      "rel": "constrained_by",
+      "to": "NFR-SEC-007"
+    },
+    {
+      "from": "COMP-SEC",
+      "rel": "constrained_by",
+      "to": "NFR-SEC-008"
+    },
+    {
+      "from": "SYS-EDU",
+      "rel": "constrained_by",
+      "to": "CON-CCB-001"
+    },
+    {
+      "from": "SYS-EDU",
+      "rel": "constrained_by",
+      "to": "CON-CCB-002"
+    },
+    {
+      "from": "SYS-EDU",
+      "rel": "constrained_by",
+      "to": "CON-CCB-003"
+    },
+    {
+      "from": "SYS-EDU",
+      "rel": "constrained_by",
+      "to": "CON-CCB-004"
+    },
+    {
+      "from": "SYS-EDU",
+      "rel": "constrained_by",
+      "to": "CON-CCB-005"
+    },
+    {
+      "from": "SYS-EDU",
+      "rel": "constrained_by",
+      "to": "CON-CCB-006"
+    },
+    {
+      "from": "SYS-EDU",
+      "rel": "constrained_by",
+      "to": "CON-CCB-007"
+    },
+    {
+      "from": "SYS-EDU",
+      "rel": "constrained_by",
+      "to": "CON-CCB-008"
+    },
+    {
+      "from": "finance-service",
+      "rel": "served_by_base",
+      "to": "BASE-GATEWAY"
+    },
+    {
+      "from": "crm-service",
+      "rel": "served_by_base",
+      "to": "BASE-GATEWAY"
+    },
+    {
+      "from": "finance-service",
+      "rel": "served_by_base",
+      "to": "BASE-INTEGRATION"
+    },
+    {
+      "from": "academic-service",
+      "rel": "served_by_base",
+      "to": "BASE-INTEGRATION"
+    },
+    {
+      "from": "bi-service",
+      "rel": "served_by_base",
+      "to": "BASE-INTEGRATION"
+    },
+    {
+      "from": "bi-service",
+      "rel": "served_by_base",
+      "to": "BASE-CACHE"
+    },
+    {
+      "from": "crm-service",
+      "rel": "served_by_base",
+      "to": "BASE-CACHE"
+    },
+    {
+      "from": "finance-service",
+      "rel": "served_by_base",
+      "to": "BASE-SCHED"
+    },
+    {
+      "from": "admin-service",
+      "rel": "served_by_base",
+      "to": "BASE-SCHED"
+    },
+    {
+      "from": "academic-service",
+      "rel": "served_by_base",
+      "to": "BASE-NOTIFY"
+    },
+    {
+      "from": "crm-service",
+      "rel": "served_by_base",
+      "to": "BASE-NOTIFY"
+    },
+    {
+      "from": "bi-service",
+      "rel": "served_by_base",
+      "to": "BASE-NOTIFY"
+    },
+    {
+      "from": "finance-service",
+      "rel": "served_by_base",
+      "to": "BASE-NOTIFY"
+    },
+    {
+      "from": "finance-service",
+      "rel": "served_by_base",
+      "to": "BASE-APPROVAL"
+    },
+    {
+      "from": "crm-service",
+      "rel": "served_by_base",
+      "to": "BASE-APPROVAL"
+    },
+    {
+      "from": "academic-service",
+      "rel": "served_by_base",
+      "to": "BASE-APPROVAL"
+    },
+    {
+      "from": "bi-service",
+      "rel": "served_by_base",
+      "to": "BASE-APPROVAL"
+    },
+    {
+      "from": "admin-service",
+      "rel": "served_by_base",
+      "to": "BASE-RBAC"
+    },
+    {
+      "from": "admin-service",
+      "rel": "served_by_base",
+      "to": "BASE-AUDIT"
+    },
+    {
+      "from": "finance-service",
+      "rel": "served_by_base",
+      "to": "BASE-AUDIT"
+    },
+    {
+      "from": "admin-service",
+      "rel": "served_by_base",
+      "to": "BASE-ORG"
+    },
+    {
+      "from": "admin-service",
+      "rel": "served_by_base",
+      "to": "BASE-CONFIG"
+    }
+  ]
+}

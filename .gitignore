@@ -33,6 +33,7 @@ desktop.ini
 # 编辑器 / IDE 配置
 .vscode/
 .idea/
+.obsidian/
 *.swp
 
 # 临时文件

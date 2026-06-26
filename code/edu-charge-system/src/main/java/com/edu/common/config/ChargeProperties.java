@@ -26,6 +26,9 @@ public class ChargeProperties {
     /** 排课/试听占用缓冲（分钟），默认 5，范围 1~30（CON-CCB-001）。 */
     private int scheduleBufferMinutes = 5;
 
+    /** 报名优惠合计触发特批审批的占比阈值，默认 0.25（业务规则，配置注入避免硬编码）。 */
+    private BigDecimal orderApprovalRatio = new BigDecimal("0.25");
+
     public BigDecimal getGiftRefundDiscountFactor() {
         return giftRefundDiscountFactor;
     }
@@ -64,5 +67,13 @@ public class ChargeProperties {
 
     public void setScheduleBufferMinutes(int scheduleBufferMinutes) {
         this.scheduleBufferMinutes = scheduleBufferMinutes;
+    }
+
+    public BigDecimal getOrderApprovalRatio() {
+        return orderApprovalRatio;
+    }
+
+    public void setOrderApprovalRatio(BigDecimal orderApprovalRatio) {
+        this.orderApprovalRatio = orderApprovalRatio;
     }
 }

@@ -1,5 +1,6 @@
 package com.edu.crm.order.service.impl;
 
+import com.edu.common.config.ChargeProperties;
 import com.edu.common.exception.BizException;
 import com.edu.common.exception.ErrorCode;
 import com.edu.crm.order.model.dto.PriceCalcDTO;
@@ -30,7 +31,11 @@ public class OrderServiceImpl implements OrderService {
     /** 互斥组：同组内优惠不可叠加。 */
     private static final Set<String> MUTEX_GROUP = Set.of("NEW2026", "VIP");
 
-    private static final BigDecimal APPROVAL_RATIO = new BigDecimal("0.25");
+    private final ChargeProperties chargeProperties;
+
+    public OrderServiceImpl(ChargeProperties chargeProperties) {
+        this.chargeProperties = chargeProperties;
+    }
 
     @Override
     public PriceCalcVO calcPrice(PriceCalcDTO dto) {
@@ -57,7 +62,8 @@ public class OrderServiceImpl implements OrderService {
         boolean needApproval = false;
         String reason = null;
         if (original.signum() > 0
-                && totalDiscount.divide(original, 4, RoundingMode.HALF_UP).compareTo(APPROVAL_RATIO) >= 0) {
+                && totalDiscount.divide(original, 4, RoundingMode.HALF_UP)
+                        .compareTo(chargeProperties.getOrderApprovalRatio()) >= 0) {
             needApproval = true;
             reason = "优惠合计占比超阈值，触发特批审批";
         }

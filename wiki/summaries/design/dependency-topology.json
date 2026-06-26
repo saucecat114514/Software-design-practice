@@ -1,0 +1,291 @@
+{
+  "meta": {
+    "dts_id": "DTS-EDU-V1",
+    "mds_id": "MDS-EDU-V1",
+    "baseline": "BL-20260623-01",
+    "global_base": [
+      "MOD-105",
+      "MOD-106",
+      "MOD-108"
+    ],
+    "generator": "build_mds_dts.py"
+  },
+  "checks": {
+    "cycle": [],
+    "edge_total": 34
+  },
+  "edges": [
+    {
+      "edge": "EDGE-0001",
+      "from": "MOD-003",
+      "to": "MOD-101",
+      "mode": "本地调用",
+      "scene": "下单触发支付渠道",
+      "cls": "业务→基础"
+    },
+    {
+      "edge": "EDGE-0002",
+      "from": "MOD-009",
+      "to": "MOD-101",
+      "mode": "本地调用",
+      "scene": "收款入账读取渠道流水/查单",
+      "cls": "业务→基础"
+    },
+    {
+      "edge": "EDGE-0003",
+      "from": "MOD-003",
+      "to": "MOD-104",
+      "mode": "本地调用",
+      "scene": "特批审批发起",
+      "cls": "业务→基础"
+    },
+    {
+      "edge": "EDGE-0004",
+      "from": "MOD-007",
+      "to": "MOD-104",
+      "mode": "本地调用",
+      "scene": "转班退款审批",
+      "cls": "业务→基础"
+    },
+    {
+      "edge": "EDGE-0005",
+      "from": "MOD-010",
+      "to": "MOD-104",
+      "mode": "本地调用",
+      "scene": "退费分级审批",
+      "cls": "业务→基础"
+    },
+    {
+      "edge": "EDGE-0006",
+      "from": "MOD-016",
+      "to": "MOD-104",
+      "mode": "本地调用",
+      "scene": "关键财务/优惠分级审批",
+      "cls": "业务→基础"
+    },
+    {
+      "edge": "EDGE-0007",
+      "from": "MOD-021",
+      "to": "MOD-104",
+      "mode": "本地调用",
+      "scene": "例外调整审批",
+      "cls": "业务→基础"
+    },
+    {
+      "edge": "EDGE-0008",
+      "from": "MOD-002",
+      "to": "MOD-103",
+      "mode": "本地调用",
+      "scene": "候补释放通知",
+      "cls": "业务→基础"
+    },
+    {
+      "edge": "EDGE-0009",
+      "from": "MOD-003",
+      "to": "MOD-103",
+      "mode": "本地调用",
+      "scene": "审批/缴费通知",
+      "cls": "业务→基础"
+    },
+    {
+      "edge": "EDGE-0010",
+      "from": "MOD-004",
+      "to": "MOD-103",
+      "mode": "本地调用",
+      "scene": "调课通知家长",
+      "cls": "业务→基础"
+    },
+    {
+      "edge": "EDGE-0011",
+      "from": "MOD-006",
+      "to": "MOD-103",
+      "mode": "本地调用",
+      "scene": "考勤/请假通知",
+      "cls": "业务→基础"
+    },
+    {
+      "edge": "EDGE-0012",
+      "from": "MOD-013",
+      "to": "MOD-103",
+      "mode": "本地调用",
+      "scene": "催缴/续费提醒",
+      "cls": "业务→基础"
+    },
+    {
+      "edge": "EDGE-0013",
+      "from": "MOD-018",
+      "to": "MOD-103",
+      "mode": "本地调用",
+      "scene": "告警下发",
+      "cls": "业务→基础"
+    },
+    {
+      "edge": "EDGE-0014",
+      "from": "MOD-009",
+      "to": "MOD-107",
+      "mode": "本地调用",
+      "scene": "日终对账定时触发",
+      "cls": "业务→基础"
+    },
+    {
+      "edge": "EDGE-0015",
+      "from": "MOD-013",
+      "to": "MOD-107",
+      "mode": "本地调用",
+      "scene": "欠费巡检/续费重发定时",
+      "cls": "业务→基础"
+    },
+    {
+      "edge": "EDGE-0016",
+      "from": "MOD-021",
+      "to": "MOD-107",
+      "mode": "本地调用",
+      "scene": "灾备演练/备份定时",
+      "cls": "业务→基础"
+    },
+    {
+      "edge": "EDGE-0017",
+      "from": "MOD-011",
+      "to": "MOD-102",
+      "mode": "本地调用",
+      "scene": "电子发票平台开票/红冲",
+      "cls": "业务→基础"
+    },
+    {
+      "edge": "EDGE-0018",
+      "from": "MOD-017",
+      "to": "MOD-102",
+      "mode": "本地调用",
+      "scene": "家长小程序数据同步",
+      "cls": "业务→基础"
+    },
+    {
+      "edge": "EDGE-0019",
+      "from": "MOD-009",
+      "to": "MOD-102",
+      "mode": "本地调用",
+      "scene": "支付渠道对账单拉取",
+      "cls": "业务→基础"
+    },
+    {
+      "edge": "EDGE-0020",
+      "from": "MOD-003",
+      "to": "MOD-009",
+      "mode": "本地调用",
+      "scene": "报名下单后移交收款入账",
+      "cls": "跨业务域"
+    },
+    {
+      "edge": "EDGE-0021",
+      "from": "MOD-006",
+      "to": "MOD-008",
+      "mode": "本地调用",
+      "scene": "签到触发课消采集",
+      "cls": "跨业务域"
+    },
+    {
+      "edge": "EDGE-0022",
+      "from": "MOD-008",
+      "to": "MOD-012",
+      "mode": "事件",
+      "scene": "课消明细异步驱动收入确认",
+      "cls": "跨业务域"
+    },
+    {
+      "edge": "EDGE-0023",
+      "from": "MOD-007",
+      "to": "MOD-010",
+      "mode": "本地调用",
+      "scene": "转班原路退款移交退费计算",
+      "cls": "跨业务域"
+    },
+    {
+      "edge": "EDGE-0024",
+      "from": "MOD-009",
+      "to": "MOD-011",
+      "mode": "事件",
+      "scene": "收款成功异步触发开票",
+      "cls": "跨业务域"
+    },
+    {
+      "edge": "EDGE-0025",
+      "from": "MOD-010",
+      "to": "MOD-011",
+      "mode": "本地调用",
+      "scene": "退费触发发票红冲校验",
+      "cls": "跨业务域"
+    },
+    {
+      "edge": "EDGE-0026",
+      "from": "MOD-010",
+      "to": "MOD-012",
+      "mode": "事件",
+      "scene": "退费驱动收入红冲调整",
+      "cls": "跨业务域"
+    },
+    {
+      "edge": "EDGE-0027",
+      "from": "MOD-008",
+      "to": "MOD-014",
+      "mode": "本地调用",
+      "scene": "课时费结算数据供工资计提",
+      "cls": "跨业务域"
+    },
+    {
+      "edge": "EDGE-0028",
+      "from": "MOD-002",
+      "to": "MOD-005",
+      "mode": "本地调用",
+      "scene": "试听占用读取班级容量",
+      "cls": "跨业务域"
+    },
+    {
+      "edge": "EDGE-0029",
+      "from": "MOD-016",
+      "to": "MOD-015",
+      "mode": "本地调用",
+      "scene": "BI看板读取财务报表口径",
+      "cls": "跨业务域"
+    },
+    {
+      "edge": "EDGE-0030",
+      "from": "MOD-009",
+      "to": "IFR-PAY-001",
+      "mode": "API",
+      "scene": "支付渠道回调与主动查单兜底",
+      "cls": "业务→外部接口"
+    },
+    {
+      "edge": "EDGE-0031",
+      "from": "MOD-011",
+      "to": "IFR-INV-001",
+      "mode": "API",
+      "scene": "第三方电子发票开票/红冲",
+      "cls": "业务→外部接口"
+    },
+    {
+      "edge": "EDGE-0032",
+      "from": "MOD-008",
+      "to": "IFR-FIN-001",
+      "mode": "API",
+      "scene": "第三方财务系统对接",
+      "cls": "业务→外部接口"
+    },
+    {
+      "edge": "EDGE-0033",
+      "from": "MOD-103",
+      "to": "IFR-MSG-001",
+      "mode": "API",
+      "scene": "统一通知外发",
+      "cls": "业务→外部接口"
+    },
+    {
+      "edge": "EDGE-0034",
+      "from": "MOD-017",
+      "to": "IFR-MINI-001",
+      "mode": "API",
+      "scene": "家长小程序实时同步",
+      "cls": "业务→外部接口"
+    }
+  ]
+}

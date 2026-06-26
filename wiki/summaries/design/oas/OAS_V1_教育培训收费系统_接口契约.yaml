@@ -1,0 +1,860 @@
+openapi: 3.0.3
+
+info:
+  title: 教育培训机构教务收费管理系统 · 接口契约（核心业务主线）
+  description: >-
+    基于 AI 工程规范的 OpenAPI 3.0.3 契约。承接 TLCD-EDU-V1 三层约束、MDS-EDU-V1 模块边界、
+    DTS-EDU-V1 依赖拓扑。本文件给出核心业务主线（报名→收款→考勤课时→收入确认→退费/转班→发票 +
+    支付回调/统一通知）的字段级完整契约，驱动 D14 v1 代码与 D16~18 v2 变更；全量接口台账见
+    接口清单-API-Inventory-v1.0.md（凡有调用必有契约、零遗漏）。
+  version: V1
+  contact:
+    name: 架构设计（AI 全量执行）
+  x-oas-id: OAS-EDU-V1
+  x-baseline: BL-20260623-01
+  x-created: "2026-06-26"
+  x-status: 正式生效（CCB 2026-06-26 评审通过）
+
+servers:
+  - url: http://localhost:8080
+    description: 本地开发
+  - url: https://test.edu.example.com
+    description: 测试环境
+  - url: https://api.edu.example.com
+    description: 生产环境
+
+tags:
+  - name: auth
+    description: 鉴权（登录/会话）——对齐 C-ARCH-0011 安全约束、基础模块 MOD-105 RBAC
+  - name: order
+    description: 报名订单与优惠 MOD-003（crm-service）
+  - name: attendance
+    description: 考勤与课时账户 MOD-006（academic-service）
+  - name: transfer
+    description: 转班管理 MOD-007（academic-service）★v2 变更目标
+  - name: payment
+    description: 收款与对账 MOD-009（finance-service）
+  - name: refund
+    description: 退费管理 MOD-010（finance-service）★v2 变更目标
+  - name: invoice
+    description: 发票管理 MOD-011（finance-service）
+  - name: revenue
+    description: 收入确认 MOD-012（finance-service）
+  - name: notify
+    description: 统一通知 MOD-103（platform-common 基础模块）
+
+paths:
+
+  /api/auth/v1/session/login:
+    post:
+      tags: [auth]
+      summary: 用户登录获取令牌
+      description: 账号密码登录，返回 Bearer 令牌与数据范围；高危角色触发 2FA（C-ARCH-0011）。
+      operationId: authLogin
+      x-api-id: API-0000
+      x-mod-id: MOD-105
+      x-rtm-id: NFR-SEC-006
+      x-tlcd-id: C-ARCH-0011
+      x-access-level: 免登
+      x-ai-generatable: true
+      x-external: false
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginReq"
+      responses:
+        "200":
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/LoginVO"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /api/order/v1/price/calc:
+    post:
+      tags: [order]
+      summary: 报名优惠算价
+      description: >-
+        按内置优惠规则与转介绍自动算价；互斥优惠 100% 阻止；优惠冲突/模糊按最高优惠并触发审批。
+        响应 ≤1s（C-ARCH-0009）。仅算价不落单。
+      operationId: orderCalcPrice
+      x-api-id: API-0009
+      x-mod-id: MOD-003
+      x-rtm-id: FR-ORDER-001
+      x-tlcd-id: C-MOD-0002
+      x-access-level: 课程顾问
+      x-ai-generatable: true
+      x-external: false
+      parameters:
+        - $ref: "#/components/parameters/TraceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PriceCalcReq"
+      responses:
+        "200":
+          description: 算价成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/PriceCalcVO"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /api/order/v1/order/create:
+    post:
+      tags: [order]
+      summary: 创建报名订单并触发统一收款
+      description: 生成订单并触发统一收款（禁线下收款入口，C-ARCH-0011/MOD-003 Exclude）；支付成功后状态置已支付。
+      operationId: orderCreate
+      x-api-id: API-0013
+      x-mod-id: MOD-003
+      x-rtm-id: FR-ORDER-005
+      x-tlcd-id: C-MOD-0005
+      x-access-level: 课程顾问
+      x-ai-generatable: true
+      x-external: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderCreateReq"
+      responses:
+        "200":
+          description: 下单成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/OrderVO"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /api/attendance/v1/checkin/create:
+    post:
+      tags: [attendance]
+      summary: 签到与课时扣减
+      description: >-
+        双模式签到（全员/扫码）。迟到≤15min 不扣课时但记录、迟到>15min 与早退按整课时扣除；
+        旷课默认不计收入。扣课时为课时账户唯一出口（MOD-006）。
+      operationId: attendanceCheckin
+      x-api-id: API-0023
+      x-mod-id: MOD-006
+      x-rtm-id: FR-ATT-002
+      x-tlcd-id: C-MOD-0003
+      x-access-level: 教务老师/家长
+      x-ai-generatable: true
+      x-external: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckinReq"
+      responses:
+        "200":
+          description: 签到成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/CheckinVO"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /api/transfer/v1/fee/confirm:
+    post:
+      tags: [transfer]
+      summary: 转班费用确认（★v2 变更目标）
+      description: >-
+        转班差价按**实际支付单价**计算（DEF-004 口径）；赠课作废模式下转班后不含赠课。
+        原路退款触发退费流（移交 MOD-010）。本接口为 D16 需求变更（CR）重点。
+      operationId: transferFeeConfirm
+      x-api-id: API-0030
+      x-mod-id: MOD-007
+      x-rtm-id: FR-TRF-002
+      x-tlcd-id: C-MOD-0010
+      x-access-level: 教务老师
+      x-ai-generatable: true
+      x-external: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferFeeReq"
+      responses:
+        "200":
+          description: 费用确认成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/TransferFeeVO"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /api/payment/v1/claim/create:
+    post:
+      tags: [payment]
+      summary: 收款认领
+      description: 认领待认领收款至指定学员订单；不选订单不可提交；金额不符高亮且禁一键确认（MOD-009）。
+      operationId: paymentClaim
+      x-api-id: API-0035
+      x-mod-id: MOD-009
+      x-rtm-id: FR-PAY-001
+      x-tlcd-id: C-MOD-0002
+      x-access-level: 财务/教务
+      x-ai-generatable: true
+      x-external: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentClaimReq"
+      responses:
+        "200":
+          description: 认领成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/PaymentClaimVO"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /api/payment/v1/reconcile/list:
+    get:
+      tags: [payment]
+      summary: 对账结果分页查询
+      description: 分页查询日终对账匹配结果，含已匹配/待认领/待确认/金额不符/在途状态（MOD-009）。
+      operationId: reconcileList
+      x-api-id: API-0042
+      x-mod-id: MOD-009
+      x-rtm-id: FR-RECON-002
+      x-tlcd-id: C-MOD-0011
+      x-access-level: 财务
+      x-ai-generatable: true
+      x-external: false
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Size"
+        - name: settle_date
+          in: query
+          required: true
+          description: 对账日（自然日）
+          schema:
+            type: string
+            format: date
+            example: "2026-06-25"
+        - name: match_status
+          in: query
+          required: false
+          description: 匹配状态筛选
+          schema:
+            type: string
+            enum: [matched, unclaimed, pending_confirm, amount_mismatch, in_transit]
+            example: unclaimed
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/ReconcilePage"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /api/refund/v1/calc/create:
+    post:
+      tags: [refund]
+      summary: 退费金额计算（★v2 变更目标）
+      description: >-
+        固化消耗顺序（先购买后赠送）+ **含赠送总课时均价**口径；赠课按折价系数核算成本（默认1.0[0~1]）；
+        计算即冻结参数快照（DEF-001）。本接口为 D16 需求变更（CR）重点。
+      operationId: refundCalc
+      x-api-id: API-0046
+      x-mod-id: MOD-010
+      x-rtm-id: FR-REF-001
+      x-tlcd-id: C-MOD-0010
+      x-access-level: 财务
+      x-ai-generatable: true
+      x-external: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefundCalcReq"
+      responses:
+        "200":
+          description: 计算成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RefundCalcVO"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409":
+          description: 存在已开票未红冲发票，退费被阻断
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /api/refund/v1/approve/update:
+    post:
+      tags: [refund]
+      summary: 退费分级审批（★v2 变更目标）
+      description: >-
+        三级分级审批：小额自动通过留异常标记；大额强制校长审批、无自动通过；超时按规则抄送。
+        退费绝不自动放款给大额（C-MOD-0010 / CCB 裁决）。
+      operationId: refundApprove
+      x-api-id: API-0048
+      x-mod-id: MOD-010
+      x-rtm-id: FR-REF-003
+      x-tlcd-id: C-ARCH-0012
+      x-access-level: 校区主管/校长
+      x-ai-generatable: true
+      x-external: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefundApproveReq"
+      responses:
+        "200":
+          description: 审批处理成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RefundApproveVO"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /api/invoice/v1/issue/create:
+    post:
+      tags: [invoice]
+      summary: 开具发票
+      description: 支付后开票；≤阈值（默认5000）自动开、>阈值入待审核手动通过；经基础模块对接电票平台（MOD-011→MOD-102）。
+      operationId: invoiceIssue
+      x-api-id: API-0051
+      x-mod-id: MOD-011
+      x-rtm-id: FR-INV-001
+      x-tlcd-id: C-ARCH-0008
+      x-access-level: 财务
+      x-ai-generatable: true
+      x-external: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InvoiceIssueReq"
+      responses:
+        "200":
+          description: 开票受理成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/InvoiceVO"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /api/revenue/v1/confirm/create:
+    post:
+      tags: [revenue]
+      summary: 收入确认
+      description: 按签到月逐节确认收入；旷课不计收入；赠课只记成本不计收入；总课时含赠送分摊（MOD-012 口径独占）。
+      operationId: revenueConfirm
+      x-api-id: API-0052
+      x-mod-id: MOD-012
+      x-rtm-id: FR-REV-001
+      x-tlcd-id: C-MOD-0010
+      x-access-level: 财务（系统/事件触发）
+      x-ai-generatable: true
+      x-external: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RevenueConfirmReq"
+      responses:
+        "200":
+          description: 确认成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /api/payment/v1/callback:
+    post:
+      tags: [payment]
+      summary: 支付渠道回调（外部接口）
+      description: >-
+        接收支付渠道异步回调，验签后入账；回调失败由 MOD-101/兜底重试≥5次（指数退避）+ 主动查单，
+        次日18:00前完成；单边账入待认领（IFR-PAY-001）。
+      operationId: paymentCallback
+      x-api-id: API-0089
+      x-mod-id: MOD-009
+      x-rtm-id: IFR-PAY-001
+      x-tlcd-id: C-MOD-0009
+      x-access-level: 免登（验签）
+      x-ai-generatable: true
+      x-external: true
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PayCallbackReq"
+      responses:
+        "200":
+          description: 回调受理成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+  /api/notify/v1/send:
+    post:
+      tags: [notify]
+      summary: 统一通知发送（基础能力）
+      description: 统一通知下发（App/短信/小程序），模板化、已读追踪、降级（IFR-MSG-001 / 基础模块 MOD-103）。
+      operationId: notifySend
+      x-api-id: API-0092
+      x-mod-id: MOD-103
+      x-rtm-id: IFR-MSG-001
+      x-tlcd-id: C-MOD-0007
+      x-access-level: 内部（业务模块调用）
+      x-ai-generatable: true
+      x-external: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotifyReq"
+      responses:
+        "200":
+          description: 受理成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "500": { $ref: "#/components/responses/ServerError" }
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    TraceId:
+      name: X-Trace-Id
+      in: header
+      required: false
+      description: 链路追踪 ID
+      schema:
+        type: string
+        example: "9b1c3f2a7d4e"
+    Page:
+      name: page
+      in: query
+      required: true
+      description: 页码（从 1 开始）
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+        example: 1
+    Size:
+      name: size
+      in: query
+      required: true
+      description: 每页条数
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 10
+        example: 10
+
+  responses:
+    BadRequest:
+      description: 参数错误
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiResponse"
+    Unauthorized:
+      description: 未认证或令牌失效
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiResponse"
+    Forbidden:
+      description: 无权限（越权/数据范围外）
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiResponse"
+    ServerError:
+      description: 服务器内部错误
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiResponse"
+
+  schemas:
+
+    ApiResponse:
+      type: object
+      description: 全局统一响应体（C-CODE-0013）
+      required: [code, message, timestamp]
+      properties:
+        code:
+          type: string
+          description: 业务码，系统级+模块级+场景码，如 "0000" 成功、"FIN-1001" 退费阻断
+          example: "0000"
+        message:
+          type: string
+          description: 可读提示
+          example: 成功
+        data:
+          type: object
+          description: 业务主体数据
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+          description: 响应时间戳
+          example: "2026-06-26T10:00:00+08:00"
+
+    PageMeta:
+      type: object
+      description: 通用分页元信息
+      properties:
+        page: { type: integer, description: 当前页, example: 1 }
+        size: { type: integer, description: 每页条数, example: 10 }
+        total: { type: integer, description: 总条数, example: 128 }
+
+    LoginReq:
+      type: object
+      required: [account, password]
+      properties:
+        account: { type: string, description: 登录账号, example: "finance01" }
+        password: { type: string, format: password, description: 密码, example: "P@ssw0rd!" }
+        otp: { type: string, description: 高危角色 2FA 验证码（可选）, example: "123456" }
+
+    LoginVO:
+      type: object
+      properties:
+        token: { type: string, description: Bearer 令牌, example: "eyJhbGciOi..." }
+        user_id: { type: string, description: 用户ID, example: "U10001" }
+        campus_scope:
+          type: array
+          description: 数据范围（可见校区ID）
+          items: { type: string }
+          example: ["C001", "C002"]
+
+    PriceCalcReq:
+      type: object
+      required: [customer_phone, course_id, discount_codes]
+      properties:
+        customer_phone: { type: string, description: 客户手机号, example: "13800001111" }
+        course_id: { type: string, description: 课程/课包ID, example: "CRS-001" }
+        original_amount: { type: number, description: 原价(元), example: 12000.00 }
+        discount_codes:
+          type: array
+          description: 勾选优惠码（互斥项由后端校验阻止）
+          items: { type: string }
+          example: ["NEW2026", "REFERRAL"]
+        referrer_phone: { type: string, description: 转介绍人手机号(可选), example: "13900002222" }
+
+    PriceCalcVO:
+      type: object
+      properties:
+        final_amount: { type: number, description: 最终应付(元), example: 9800.00 }
+        applied_discounts:
+          type: array
+          description: 实际生效优惠摘要
+          items: { type: string }
+          example: ["新生优惠-1000", "转介绍-1200"]
+        need_approval: { type: boolean, description: 是否触发特批审批, example: true }
+        approval_reason: { type: string, description: 触发审批原因, nullable: true, example: "优惠组合超阈值" }
+
+    OrderCreateReq:
+      type: object
+      required: [customer_phone, course_id, final_amount, pay_channel]
+      properties:
+        customer_phone: { type: string, description: 客户手机号, example: "13800001111" }
+        course_id: { type: string, description: 课程/课包ID, example: "CRS-001" }
+        final_amount: { type: number, description: 应付金额(元), example: 9800.00 }
+        pay_channel:
+          type: string
+          description: 支付渠道
+          enum: [wechat, alipay, bank, cash]
+          example: wechat
+        price_snapshot_id: { type: string, description: 算价快照ID, example: "PS-20260626-001" }
+
+    OrderVO:
+      type: object
+      properties:
+        order_id: { type: string, description: 订单ID, example: "ORD-20260626-0001" }
+        status:
+          type: string
+          description: 订单状态
+          enum: [unpaid, paying, paid, approving, rejected]
+          example: paying
+        pay_url: { type: string, description: 收银台跳转链接, nullable: true, example: "https://pay..." }
+
+    CheckinReq:
+      type: object
+      required: [lesson_id, student_id, mode]
+      properties:
+        lesson_id: { type: string, description: 课节ID, example: "LSN-20260626-09" }
+        student_id: { type: string, description: 学员ID, example: "STU-001" }
+        mode:
+          type: string
+          description: 签到模式
+          enum: [all_in_one, qr_code]
+          example: qr_code
+        checkin_time: { type: string, format: date-time, description: 签到时间, example: "2026-06-26T09:10:00+08:00" }
+
+    CheckinVO:
+      type: object
+      properties:
+        attendance_status:
+          type: string
+          description: 考勤状态
+          enum: [present, present_late, leave_early, absent]
+          example: present_late
+        hour_deducted: { type: number, description: 本次扣减课时, example: 1 }
+        hour_remaining: { type: number, description: 剩余课时, example: 39 }
+
+    TransferFeeReq:
+      type: object
+      required: [order_id, target_class_id, gift_handle_mode]
+      properties:
+        order_id: { type: string, description: 原订单ID, example: "ORD-20260601-0007" }
+        target_class_id: { type: string, description: 目标班级ID, example: "CLS-A2" }
+        gift_handle_mode:
+          type: string
+          description: 赠课处理模式
+          enum: [void, carry]
+          example: void
+        refund_route:
+          type: string
+          description: 差价为负时退款去向
+          enum: [balance, original_route]
+          example: balance
+
+    TransferFeeVO:
+      type: object
+      description: 转班费用单（差价按实际支付单价计算，DEF-004 口径）
+      properties:
+        actual_unit_price: { type: number, description: 实际支付单价(元/课时), example: 245.00 }
+        remaining_value: { type: number, description: 原课包剩余价值(元), example: 4900.00 }
+        target_amount: { type: number, description: 目标课包应付(元), example: 6000.00 }
+        diff_amount: { type: number, description: 差价(正=补款/负=退款), example: 1100.00 }
+        gift_voided: { type: boolean, description: 赠课是否作废, example: true }
+
+    RefundCalcReq:
+      type: object
+      required: [order_id]
+      properties:
+        order_id: { type: string, description: 退费订单ID, example: "ORD-20260301-0012" }
+        reason: { type: string, description: 退费原因, example: "学员搬迁" }
+
+    RefundCalcVO:
+      type: object
+      description: 退费明细单（含赠送总课时均价口径 + 折价系数，参数快照冻结，DEF-001）
+      properties:
+        purchased_hours: { type: integer, description: 购买课时, example: 100 }
+        gift_hours: { type: integer, description: 赠送课时, example: 20 }
+        consumed_hours: { type: integer, description: 已消耗课时(先扣购买后扣赠送), example: 5 }
+        avg_unit_price: { type: number, description: 含赠送总课时均价(元/课时), example: 100.00 }
+        gift_discount_factor: { type: number, description: "赠送课时退费折价系数(0~1)", default: 1.0, example: 1.0 }
+        refund_amount: { type: number, description: 应退金额(元), example: 9500.00 }
+        snapshot_id: { type: string, description: 冻结参数快照ID, example: "RFS-20260626-003" }
+
+    RefundApproveReq:
+      type: object
+      required: [refund_id, action]
+      properties:
+        refund_id: { type: string, description: 退费单ID, example: "REF-20260626-0003" }
+        action:
+          type: string
+          description: 审批动作
+          enum: [approve, reject]
+          example: approve
+        approver_id: { type: string, description: 审批人ID, example: "U20001" }
+        comment: { type: string, description: 审批意见, nullable: true, example: "同意退费" }
+
+    RefundApproveVO:
+      type: object
+      properties:
+        refund_status:
+          type: string
+          description: 退费单状态
+          enum: [approving, approved, abnormal_passed, rejected]
+          example: approved
+        approval_level:
+          type: string
+          description: 审批级别（小额一级/大额三级强制校长）
+          enum: [level1, level2, level3]
+          example: level3
+        auto_passed: { type: boolean, description: 是否超时异常通过（大额恒为false）, example: false }
+
+    InvoiceIssueReq:
+      type: object
+      required: [order_id, title, amount]
+      properties:
+        order_id: { type: string, description: 订单ID, example: "ORD-20260626-0001" }
+        title: { type: string, description: 发票抬头, example: "张三" }
+        amount: { type: number, description: 开票金额(元), example: 4000.00 }
+        tax_no: { type: string, description: 税号(企业抬头必填), nullable: true, example: "" }
+
+    InvoiceVO:
+      type: object
+      properties:
+        invoice_id: { type: string, description: 发票ID, example: "INV-20260626-0001" }
+        status:
+          type: string
+          description: 发票状态
+          enum: [auto_issued, pending_review, issued, red_flushed, void]
+          example: auto_issued
+        need_review: { type: boolean, description: 是否需人工审核(>阈值), example: false }
+
+    RevenueConfirmReq:
+      type: object
+      required: [consume_record_id]
+      properties:
+        consume_record_id: { type: string, description: 课消记录ID, example: "CSM-20260626-0001" }
+        signed_month: { type: string, description: 签到归属月, example: "2026-06" }
+        is_gift: { type: boolean, description: 是否赠课消耗(只计成本不计收入), example: false }
+
+    PayCallbackReq:
+      type: object
+      required: [channel, channel_txn_no, amount, sign]
+      properties:
+        channel:
+          type: string
+          description: 渠道
+          enum: [wechat, alipay, bank]
+          example: wechat
+        channel_txn_no: { type: string, description: 渠道流水号, example: "4200001234202606261234" }
+        out_order_id: { type: string, description: 商户订单号, nullable: true, example: "ORD-20260626-0001" }
+        amount: { type: number, description: 实付金额(元), example: 9800.00 }
+        sign: { type: string, description: 渠道验签串, example: "A1B2C3..." }
+
+    NotifyReq:
+      type: object
+      required: [channel, template_code, receiver]
+      properties:
+        channel:
+          type: string
+          description: 通知通道
+          enum: [app, sms, miniprogram]
+          example: sms
+        template_code: { type: string, description: 模板编码, example: "REFUND_APPROVED" }
+        receiver: { type: string, description: 接收人(手机号/用户ID), example: "13800001111" }
+        params:
+          type: object
+          description: 模板变量
+          additionalProperties: { type: string }
+          example: { amount: "9500.00" }
+
+    ReconcilePage:
+      type: object
+      properties:
+        meta: { $ref: "#/components/schemas/PageMeta" }
+        list:
+          type: array
+          items: { $ref: "#/components/schemas/ReconcileItem" }
+
+    ReconcileItem:
+      type: object
+      properties:
+        reconcile_id: { type: string, description: 对账记录ID, example: "RCN-20260625-0007" }
+        channel_txn_no: { type: string, description: 渠道流水号, example: "42000012342026" }
+        amount: { type: number, description: 金额(元), example: 9800.00 }
+        match_status:
+          type: string
+          description: 匹配状态
+          enum: [matched, unclaimed, pending_confirm, amount_mismatch, in_transit]
+          example: unclaimed
+
+security:
+  - bearerAuth: []

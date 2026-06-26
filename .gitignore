@@ -40,6 +40,12 @@ desktop.ini
 *.tmp
 *.log
 
+# Java / Maven 构建产物（v1/v2 代码工程，源码入库、产物不入库）
+target/
+*.class
+*.jar
+!**/maven-wrapper.jar
+
 # 提交包构建产物（由 git archive 从 HEAD 生成，无需入库）
 *.zip
 

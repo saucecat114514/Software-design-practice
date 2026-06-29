@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>教育培训收费系统 v2 · 演示</title>
+<style>
+  :root { --bg:#0f1115; --card:#181b22; --line:#2a2f3a; --fg:#e6e9ef; --mut:#9aa4b2;
+          --ok:#3fb950; --acc:#58a6ff; --star:#f0883e; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font:14px/1.5 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif; }
+  header { padding:18px 24px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--bg); z-index:5; }
+  header h1 { margin:0; font-size:18px; }
+  header p { margin:4px 0 0; color:var(--mut); font-size:13px; }
+  .bar { padding:14px 24px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; border-bottom:1px solid var(--line); }
+  button { background:var(--acc); color:#08111f; border:0; border-radius:6px; padding:7px 12px;
+           font-weight:600; cursor:pointer; font-size:13px; }
+  button:hover { filter:brightness(1.1); }
+  button.run { background:var(--ok); color:#04140a; padding:9px 18px; font-size:14px; }
+  .grid { padding:18px 24px; display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+  .card .h { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .card .n { width:22px; height:22px; border-radius:50%; background:#222733; color:var(--mut);
+             display:grid; place-items:center; font-size:12px; flex:0 0 auto; }
+  .card .t { font-weight:600; }
+  .star { background:var(--star); color:#1a0f04; font-size:11px; padding:1px 6px; border-radius:10px; font-weight:700; }
+  .ep { color:var(--mut); font-size:12px; font-family:ui-monospace,monospace; margin:2px 0 8px; word-break:break-all; }
+  pre { background:#0b0d12; border:1px solid var(--line); border-radius:6px; padding:8px; margin:8px 0 0;
+        font-size:12px; max-height:170px; overflow:auto; white-space:pre-wrap; word-break:break-all; color:#cdd6e2; }
+  .ok { color:var(--ok); } .err { color:#f85149; }
+  .hint { color:var(--mut); font-size:12px; margin-top:4px; }
+  a { color:var(--acc); }
+</style>
+</head>
+<body>
+<header>
+  <h1>教育培训机构教务收费管理系统 · v2 演示</h1>
+  <p>四层分层 Spring Boot + H2 嵌入式 + MyBatis ｜ 点按钮即调真实接口、数据落库 ｜ ★ 为 v2 需求变更口径（DEF-001/004）</p>
+</header>
+<div class="bar">
+  <button class="run" onclick="runAll()">▶ 一键跑通完整闭环</button>
+  <span class="hint">依次执行 1→14 步；也可单独点每张卡片的按钮。H2 控制台：<a href="/h2-console" target="_blank">/h2-console</a>（JDBC URL: jdbc:h2:mem:edu）</span>
+</div>
+<div class="grid" id="grid"></div>
+
+<script>
+const STEPS = [
+  ["登录", "POST", "/api/auth/v1/session/login", {account:"finance01",password:"p"}, ""],
+  ["报名算价", "POST", "/api/order/v1/price/calc", {customer_phone:"13800001111",course_id:"CRS-001",original_amount:12000.00,discount_codes:["NEW2026"]}, "互斥优惠拦截+占比超阈触发审批"],
+  ["创建订单", "POST", "/api/order/v1/order/create", {customer_phone:"13800001111",course_id:"CRS-001",final_amount:11000.00,pay_channel:"wechat"}, "落 crm_order，状态 paying"],
+  ["支付回调入账", "POST", "/api/payment/v1/callback", {channel:"wechat",channel_txn_no:"T-DEMO",out_order_id:"O-DEMO",amount:11000.00,sign:"MOCK"}, "Mock 支付沙箱验签→落 fin_payment"],
+  ["开票(<5000自动)", "POST", "/api/invoice/v1/issue/create", {order_id:"O-DEMO",title:"张三",amount:4000.00}, "≤阈值自动开、>阈值待审"],
+  ["创建班级", "POST", "/api/class/v1/class/create", {class_name:"少儿英语A2",class_type:"small",capacity:12}, "落 edu_class"],
+  ["排课(冲突检测)", "POST", "/api/schedule/v1/lesson/create", {class_id:"CLS-A2",teacher_id:"T1",classroom_id:"R1",start_time:"2026-07-01T09:00",end_time:"2026-07-01T10:00"}, "同教师同时段冲突则拦截"],
+  ["签到扣课时", "POST", "/api/attendance/v1/checkin/create", {lesson_id:"L1",student_id:"STU-001",mode:"qr_code"}, "扣 edu_course_hour_account 剩余课时"],
+  ["消课(发事件)", "POST", "/api/consume/v1/record/create", {lesson_id:"L1",student_id:"STU-001",is_gift:false}, "发领域事件 EDGE-0022 → 收入确认订阅"],
+  ["退费·低消耗", "POST", "/api/refund/v1/calc/create", {order_id:"ORD-20260301-0012",reason:"demo"}, "消耗21%≤30% → 折损0% → 9500"],
+  ["退费·高消耗", "POST", "/api/refund/v1/calc/create", {order_id:"ORD-20260301-0099",reason:"demo"}, "消耗67%>60% → 折损20% → 3200", "★ DEF-001"],
+  ["转班·赠课作废", "POST", "/api/transfer/v1/fee/confirm", {order_id:"ORD-20260601-0007",target_class_id:"CLS-A2",gift_handle_mode:"void"}, "单价=实付/购买=245 → 差价1100"],
+  ["转班·赠课结转", "POST", "/api/transfer/v1/fee/confirm", {order_id:"ORD-20260601-0007",target_class_id:"CLS-A2",gift_handle_mode:"carry"}, "单价=实付/含赠送=196 → 差价2080", "★ DEF-004"],
+  ["日终对账", "GET", "/api/payment/v1/reconcile/list?settle_date=2026-06-25&page=1&size=10", null, "读 fin_reconcile 对账流水"],
+];
+
+const grid = document.getElementById("grid");
+STEPS.forEach((s, i) => {
+  const [t, m, p, , hint, star] = s;
+  const c = document.createElement("div");
+  c.className = "card";
+  c.innerHTML = `<div class="h"><div class="n">${i+1}</div><div class="t">${t}</div>
+    ${star ? `<span class="star">${star}</span>` : ""}</div>
+    <div class="ep">${m} ${p.split("?")[0]}</div>
+    <button onclick="run(${i})">调用</button>
+    ${hint ? `<div class="hint">${hint}</div>` : ""}
+    <pre id="r${i}">—</pre>`;
+  grid.appendChild(c);
+});
+
+async function run(i) {
+  const [, m, p, body] = STEPS[i];
+  const el = document.getElementById("r" + i);
+  el.textContent = "请求中…";
+  try {
+    const opt = { method: m, headers: {"Content-Type":"application/json"} };
+    if (m !== "GET" && body) opt.body = JSON.stringify(body);
+    const res = await fetch(p, opt);
+    const j = await res.json();
+    el.textContent = JSON.stringify(j, null, 2);
+    el.className = (j.code === "0000") ? "ok" : "err";
+  } catch (e) {
+    el.textContent = "错误: " + e.message; el.className = "err";
+  }
+}
+
+async function runAll() {
+  for (let i = 0; i < STEPS.length; i++) { await run(i); await new Promise(r => setTimeout(r, 120)); }
+}
+</script>
+</body>
+</html>

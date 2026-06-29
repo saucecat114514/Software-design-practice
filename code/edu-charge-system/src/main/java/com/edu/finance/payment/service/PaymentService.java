@@ -1,5 +1,8 @@
 package com.edu.finance.payment.service;
 
+import com.edu.common.exception.BizException;
+import com.edu.common.exception.ErrorCode;
+import com.edu.common.gateway.PaymentGatewayClient;
 import com.edu.common.response.PageResult;
 import com.edu.finance.payment.model.dto.PayCallbackDTO;
 import com.edu.finance.payment.model.dto.PaymentClaimDTO;
@@ -20,9 +23,11 @@ import java.util.List;
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
+    private final PaymentGatewayClient paymentGatewayClient;
 
-    public PaymentService(PaymentRepository paymentRepository) {
+    public PaymentService(PaymentRepository paymentRepository, PaymentGatewayClient paymentGatewayClient) {
         this.paymentRepository = paymentRepository;
+        this.paymentGatewayClient = paymentGatewayClient;
     }
 
     /** 收款认领（FR-PAY-001）：认领待认领收款至订单。 */
@@ -41,7 +46,10 @@ public class PaymentService {
     /** 支付回调入账（IFR-PAY-001，Mock 沙箱）：验签固定通过，落收款记录。 */
     @Transactional
     public void callback(PayCallbackDTO dto) {
-        // v2 Mock：验签固定通过（真实由 MOD-101 支付网关验签）
+        // 经基础模块支付网关验签（v2 Mock 固定通过，EDGE-0002 业务→基础白名单）
+        if (!paymentGatewayClient.verifySign(dto.channel(), dto.channelTxnNo(), dto.sign())) {
+            throw new BizException(ErrorCode.PARAM_ERROR, "支付回调验签失败");
+        }
         Payment p = new Payment();
         p.setPaymentId("PAY-" + dto.channelTxnNo());
         p.setOrderId(dto.outOrderId());

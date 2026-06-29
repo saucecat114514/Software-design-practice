@@ -4,6 +4,29 @@ server:
 spring:
   application:
     name: edu-charge-system
+  # H2 嵌入式数据库（ADR-005 / CR-ITEM-005：本地可运行，零外部依赖）
+  datasource:
+    url: jdbc:h2:mem:edu;DB_CLOSE_DELAY=-1;MODE=MySQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  # JSON 字段下划线命名，与 OAS 契约对齐（snake_case）
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+
+# MyBatis（C-CODE-0015：Repository 经 MyBatis Mapper）
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
 
 # CCB 量化阈值统一配置注入（C-ARCH-0008 / C-CODE-0012：禁硬编码魔数）
 edu:

@@ -1,0 +1,14 @@
+-- 教育培训收费系统 v2 · H2 种子数据（P5a）
+-- 退费/转班演示用读模型数据（v1 内存种子迁移至 H2）。
+
+-- 退费订单快照：购买100 + 赠送20 课时，已消耗25，实付12000，无未红冲发票
+MERGE INTO fin_order_snapshot (order_id, purchased_hours, gift_hours, consumed_hours, paid_amount, has_unred_flushed_invoice)
+VALUES ('ORD-20260301-0012', 100, 20, 25, 12000.00, FALSE);
+
+-- 转班原订单快照：购买40、已消耗20、赠送10、实付9800
+MERGE INTO edu_transfer_snapshot (order_id, purchased_hours, consumed_hours, gift_hours, paid_amount)
+VALUES ('ORD-20260601-0007', 40, 20, 10, 9800.00);
+
+-- 转班目标班级应付价
+MERGE INTO edu_transfer_target_price (target_class_id, target_amount)
+VALUES ('CLS-A2', 6000.00);

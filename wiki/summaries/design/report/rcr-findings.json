@@ -1,7 +1,7 @@
 {
   "meta": {
     "engine": "codegraph_rcr.py",
-    "classes": 41,
+    "classes": 39,
     "impl_modules": [
       "MOD-003",
       "MOD-007",
@@ -29,7 +29,7 @@
       "viol": 0
     },
     "模块": {
-      "checked": 31,
+      "checked": 29,
       "viol": 0
     },
     "拓扑": {
@@ -41,7 +41,7 @@
       "viol": 0
     },
     "代码": {
-      "checked": 41,
+      "checked": 39,
       "viol": 0
     },
     "溯源": {

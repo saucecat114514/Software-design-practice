@@ -1,16 +1,25 @@
 {
   "meta": {
     "engine": "codegraph_rcr.py",
-    "classes": 55,
+    "classes": 87,
     "impl_modules": [
       "MOD-003",
+      "MOD-004",
+      "MOD-005",
+      "MOD-006",
       "MOD-007",
+      "MOD-008",
       "MOD-009",
       "MOD-010",
+      "MOD-011",
       "MOD-012"
     ],
     "endpoints": [
+      "/api/attendance/v1/checkin/create",
       "/api/auth/v1/session/login",
+      "/api/class/v1/class/create",
+      "/api/consume/v1/record/create",
+      "/api/invoice/v1/issue/create",
       "/api/order/v1/order/create",
       "/api/order/v1/price/calc",
       "/api/payment/v1/callback",
@@ -19,6 +28,7 @@
       "/api/refund/v1/approve/update",
       "/api/refund/v1/calc/create",
       "/api/revenue/v1/confirm/create",
+      "/api/schedule/v1/lesson/create",
       "/api/transfer/v1/fee/confirm"
     ]
   },
@@ -31,27 +41,27 @@
   },
   "dimensions": {
     "架构": {
-      "checked": 6,
-      "viol": 0
-    },
-    "模块": {
-      "checked": 41,
-      "viol": 0
-    },
-    "拓扑": {
       "checked": 11,
       "viol": 0
     },
+    "模块": {
+      "checked": 73,
+      "viol": 0
+    },
+    "拓扑": {
+      "checked": 19,
+      "viol": 0
+    },
     "契约": {
-      "checked": 10,
+      "checked": 15,
       "viol": 0
     },
     "代码": {
-      "checked": 55,
+      "checked": 87,
       "viol": 0
     },
     "溯源": {
-      "checked": 6,
+      "checked": 11,
       "viol": 0
     }
   },

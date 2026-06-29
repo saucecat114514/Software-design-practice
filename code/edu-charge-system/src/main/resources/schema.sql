@@ -87,3 +87,65 @@ CREATE TABLE fin_reconcile (
   amount         DECIMAL(14,2),
   match_status   VARCHAR(24)
 );
+
+-- ===== P5c-2 教务主线 + 发票 =====
+-- 班级（MOD-005 academic/clazz）
+DROP TABLE IF EXISTS edu_class;
+CREATE TABLE edu_class (
+  class_id   VARCHAR(64) PRIMARY KEY,
+  class_name VARCHAR(128),
+  class_type VARCHAR(16),
+  capacity   INT,
+  enrolled   INT,
+  campus_id  VARCHAR(32)
+);
+
+-- 排课（MOD-004 academic/schedule）
+DROP TABLE IF EXISTS edu_schedule;
+CREATE TABLE edu_schedule (
+  lesson_id    VARCHAR(64) PRIMARY KEY,
+  class_id     VARCHAR(64),
+  teacher_id   VARCHAR(32),
+  classroom_id VARCHAR(32),
+  start_time   VARCHAR(32),
+  end_time     VARCHAR(32)
+);
+
+-- 课时账户（MOD-006 academic/attendance）
+DROP TABLE IF EXISTS edu_course_hour_account;
+CREATE TABLE edu_course_hour_account (
+  student_id      VARCHAR(32) PRIMARY KEY,
+  total_hours     INT,
+  remaining_hours INT
+);
+
+-- 考勤（MOD-006 academic/attendance）
+DROP TABLE IF EXISTS edu_attendance;
+CREATE TABLE edu_attendance (
+  attendance_id VARCHAR(64) PRIMARY KEY,
+  lesson_id     VARCHAR(64),
+  student_id    VARCHAR(32),
+  status        VARCHAR(24),
+  hour_deducted INT
+);
+
+-- 课消（MOD-008 academic/consume）
+DROP TABLE IF EXISTS edu_consume_record;
+CREATE TABLE edu_consume_record (
+  consume_id   VARCHAR(64) PRIMARY KEY,
+  lesson_id    VARCHAR(64),
+  student_id   VARCHAR(32),
+  is_gift      BOOLEAN,
+  signed_month VARCHAR(16)
+);
+
+-- 发票（MOD-011 finance/invoice）
+DROP TABLE IF EXISTS fin_invoice;
+CREATE TABLE fin_invoice (
+  invoice_id  VARCHAR(64) PRIMARY KEY,
+  order_id    VARCHAR(64),
+  title       VARCHAR(128),
+  amount      DECIMAL(14,2),
+  status      VARCHAR(24),
+  need_review BOOLEAN
+);

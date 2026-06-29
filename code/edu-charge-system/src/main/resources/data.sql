@@ -22,3 +22,7 @@ MERGE INTO fin_reconcile (reconcile_id, settle_date, channel_txn_no, amount, mat
 VALUES ('RCN-001', '2026-06-25', 'MOCK-TXN-001', 9800.00, 'matched');
 MERGE INTO fin_reconcile (reconcile_id, settle_date, channel_txn_no, amount, match_status)
 VALUES ('RCN-002', '2026-06-25', 'MOCK-TXN-002', 5000.00, 'unclaimed');
+
+-- P5c-2 学员课时账户（签到扣课时用）：学员STU-001 共40课时、剩余40
+MERGE INTO edu_course_hour_account (student_id, total_hours, remaining_hours)
+VALUES ('STU-001', 40, 40);

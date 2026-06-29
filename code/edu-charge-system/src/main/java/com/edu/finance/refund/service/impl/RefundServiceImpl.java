@@ -22,13 +22,14 @@ import java.math.RoundingMode;
 /**
  * 退费业务实现（MOD-010）。
  *
- * 退费口径（v1 / DEF-001，CCB 裁决：财务总课时均价 + 折价系数，赠课不退现由折价系数=0 体现，默认 1.0）：
+ * 退费口径（v2 / DEF-001，CR-EDU-2026-0001 CR-ITEM-003）：
  *   均价 = 实付金额 / (购买课时 + 赠送课时)        —— 含赠送总课时均价
  *   消耗顺序 = 先扣购买课时，再扣赠送课时
- *   退费金额 = 剩余购买课时 × 均价 + 剩余赠送课时 × 均价 × 折价系数
- *   折价系数经配置注入（C-ARCH-0008），计算即冻结参数快照。
+ *   基础退费 = 剩余购买课时 × 均价 + 剩余赠送课时 × 均价 × 折价系数
+ *   ★v2 新增：按消耗进度折损率分档——消耗占比 ≤30%→0% / ≤60%→10% / >60%→20%（配置注入）
+ *   退费金额 = 基础退费 × (1 − 折损率)，计算即冻结参数快照。
  *
- * 注：本口径为 D16 需求变更（CR / DEF-001）的修改目标。
+ * v1→v2 差异：v1 无折损率（refund=基础退费）；v2 叠加消耗进度折损分档。
  */
 @Service
 public class RefundServiceImpl implements RefundService {
@@ -73,7 +74,14 @@ public class RefundServiceImpl implements RefundService {
         BigDecimal giftFactor = chargeProperties.getGiftRefundDiscountFactor();
         BigDecimal purchasedValue = avg.multiply(BigDecimal.valueOf(remainingPurchased));
         BigDecimal giftValue = avg.multiply(BigDecimal.valueOf(remainingGift)).multiply(giftFactor);
-        BigDecimal refundAmount = purchasedValue.add(giftValue).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal baseRefund = purchasedValue.add(giftValue);
+
+        // v2 / DEF-001：按消耗进度折损率分档（配置注入），退费额 = 基础额 × (1 − 折损率)
+        BigDecimal consumedRatio = BigDecimal.valueOf(consumed)
+                .divide(BigDecimal.valueOf(total), 4, RoundingMode.HALF_UP);
+        BigDecimal lossRate = lossRateOf(consumedRatio);
+        BigDecimal refundAmount = baseRefund.multiply(BigDecimal.ONE.subtract(lossRate))
+                .setScale(2, RoundingMode.HALF_UP);
 
         // 冻结参数快照并落退费单
         String refundId = "REF-" + dto.orderId();
@@ -84,12 +92,24 @@ public class RefundServiceImpl implements RefundService {
         ro.setReason(dto.reason());
         ro.setRefundAmount(refundAmount);
         ro.setGiftDiscountFactor(giftFactor);
+        ro.setRefundLossRate(lossRate);
         ro.setSnapshotId(snapshotId);
         ro.setStatus("CALCULATED");
         refundRepository.save(ro);
 
         return new RefundCalcVO(snap.purchasedHours(), snap.giftHours(), consumed,
-                avg, giftFactor, refundAmount, snapshotId);
+                avg, giftFactor, lossRate, refundAmount, snapshotId);
+    }
+
+    /** v2 折损率分档（DEF-001）：消耗占比 ≤低档阈值→0；≤高档阈值→中档率；否则高档率。 */
+    private BigDecimal lossRateOf(BigDecimal consumedRatio) {
+        if (consumedRatio.compareTo(chargeProperties.getRefundLossLowThreshold()) <= 0) {
+            return BigDecimal.ZERO;
+        }
+        if (consumedRatio.compareTo(chargeProperties.getRefundLossHighThreshold()) <= 0) {
+            return chargeProperties.getRefundLossRateMid();
+        }
+        return chargeProperties.getRefundLossRateHigh();
     }
 
     @Override

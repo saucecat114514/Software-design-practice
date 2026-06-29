@@ -13,6 +13,7 @@ public class RefundOrder {
     private String reason;
     private BigDecimal refundAmount;
     private BigDecimal giftDiscountFactor;
+    private BigDecimal refundLossRate;
     private String snapshotId;
     private String approvalLevel;
     private String status;
@@ -58,6 +59,14 @@ public class RefundOrder {
 
     public void setGiftDiscountFactor(BigDecimal giftDiscountFactor) {
         this.giftDiscountFactor = giftDiscountFactor;
+    }
+
+    public BigDecimal getRefundLossRate() {
+        return refundLossRate;
+    }
+
+    public void setRefundLossRate(BigDecimal refundLossRate) {
+        this.refundLossRate = refundLossRate;
     }
 
     public String getSnapshotId() {

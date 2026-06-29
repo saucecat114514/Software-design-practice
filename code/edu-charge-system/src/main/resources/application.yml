@@ -43,6 +43,11 @@ edu:
     schedule-buffer-minutes: 5
     # 报名优惠合计触发特批审批的占比阈值（业务规则，配置注入）
     order-approval-ratio: 0.25
+    # v2/DEF-001 退费消耗进度折损率分档（配置注入）：≤30%折0% / ≤60%折10% / >60%折20%
+    refund-loss-low-threshold: 0.30
+    refund-loss-high-threshold: 0.60
+    refund-loss-rate-mid: 0.10
+    refund-loss-rate-high: 0.20
 
 logging:
   level:

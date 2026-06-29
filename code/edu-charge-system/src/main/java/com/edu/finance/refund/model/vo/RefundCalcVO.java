@@ -11,6 +11,7 @@ public record RefundCalcVO(
         int consumedHours,
         BigDecimal avgUnitPrice,
         BigDecimal giftDiscountFactor,
+        BigDecimal refundLossRate,
         BigDecimal refundAmount,
         String snapshotId) {
 }

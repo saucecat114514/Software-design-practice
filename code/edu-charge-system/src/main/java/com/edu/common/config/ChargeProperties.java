@@ -29,6 +29,16 @@ public class ChargeProperties {
     /** 报名优惠合计触发特批审批的占比阈值，默认 0.25（业务规则，配置注入避免硬编码）。 */
     private BigDecimal orderApprovalRatio = new BigDecimal("0.25");
 
+    // ===== v2 / DEF-001：退费按消耗进度折损率分档（配置注入，C-CODE-0016）=====
+    /** 折损低档消耗占比阈值，默认 0.30（≤该值折损率为低档=0）。 */
+    private BigDecimal refundLossLowThreshold = new BigDecimal("0.30");
+    /** 折损高档消耗占比阈值，默认 0.60（≤该值中档、>该值高档）。 */
+    private BigDecimal refundLossHighThreshold = new BigDecimal("0.60");
+    /** 中档折损率，默认 0.10。 */
+    private BigDecimal refundLossRateMid = new BigDecimal("0.10");
+    /** 高档折损率，默认 0.20。 */
+    private BigDecimal refundLossRateHigh = new BigDecimal("0.20");
+
     public BigDecimal getGiftRefundDiscountFactor() {
         return giftRefundDiscountFactor;
     }
@@ -75,5 +85,37 @@ public class ChargeProperties {
 
     public void setOrderApprovalRatio(BigDecimal orderApprovalRatio) {
         this.orderApprovalRatio = orderApprovalRatio;
+    }
+
+    public BigDecimal getRefundLossLowThreshold() {
+        return refundLossLowThreshold;
+    }
+
+    public void setRefundLossLowThreshold(BigDecimal refundLossLowThreshold) {
+        this.refundLossLowThreshold = refundLossLowThreshold;
+    }
+
+    public BigDecimal getRefundLossHighThreshold() {
+        return refundLossHighThreshold;
+    }
+
+    public void setRefundLossHighThreshold(BigDecimal refundLossHighThreshold) {
+        this.refundLossHighThreshold = refundLossHighThreshold;
+    }
+
+    public BigDecimal getRefundLossRateMid() {
+        return refundLossRateMid;
+    }
+
+    public void setRefundLossRateMid(BigDecimal refundLossRateMid) {
+        this.refundLossRateMid = refundLossRateMid;
+    }
+
+    public BigDecimal getRefundLossRateHigh() {
+        return refundLossRateHigh;
+    }
+
+    public void setRefundLossRateHigh(BigDecimal refundLossRateHigh) {
+        this.refundLossRateHigh = refundLossRateHigh;
     }
 }

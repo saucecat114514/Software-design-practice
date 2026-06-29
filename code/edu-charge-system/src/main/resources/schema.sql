@@ -10,6 +10,7 @@ CREATE TABLE fin_refund (
   reason               VARCHAR(255),
   refund_amount        DECIMAL(14,2),
   gift_discount_factor DECIMAL(6,4),
+  refund_loss_rate     DECIMAL(6,4),
   snapshot_id          VARCHAR(64),
   approval_level       VARCHAR(16),
   status               VARCHAR(32)

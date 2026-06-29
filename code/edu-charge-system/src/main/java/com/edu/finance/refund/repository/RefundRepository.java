@@ -20,12 +20,12 @@ public interface RefundRepository {
 
     /** 保存/更新退费单（H2 MERGE 实现 upsert）。 */
     @Insert("MERGE INTO fin_refund (refund_id, order_id, reason, refund_amount, gift_discount_factor, "
-            + "snapshot_id, approval_level, status) VALUES (#{refundId}, #{orderId}, #{reason}, #{refundAmount}, "
-            + "#{giftDiscountFactor}, #{snapshotId}, #{approvalLevel}, #{status})")
+            + "refund_loss_rate, snapshot_id, approval_level, status) VALUES (#{refundId}, #{orderId}, #{reason}, "
+            + "#{refundAmount}, #{giftDiscountFactor}, #{refundLossRate}, #{snapshotId}, #{approvalLevel}, #{status})")
     void save(RefundOrder refundOrder);
 
     /** 按退费单ID查询。 */
-    @Select("SELECT refund_id, order_id, reason, refund_amount, gift_discount_factor, snapshot_id, "
-            + "approval_level, status FROM fin_refund WHERE refund_id = #{refundId}")
+    @Select("SELECT refund_id, order_id, reason, refund_amount, gift_discount_factor, refund_loss_rate, "
+            + "snapshot_id, approval_level, status FROM fin_refund WHERE refund_id = #{refundId}")
     RefundOrder findById(String refundId);
 }

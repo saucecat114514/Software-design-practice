@@ -19,16 +19,15 @@ import java.math.RoundingMode;
 /**
  * 转班业务实现（MOD-007）。
  *
- * 转班费用口径（v1 / DEF-004，CCB 裁决：差价按**实际支付单价**）：
- *   实际支付单价 = 实付金额 / 购买课时        —— 不含赠送（区别于退费的含赠送均价）
+ * 转班费用口径（v2 / DEF-004，CR-EDU-2026-0001 CR-ITEM-004）：差价按**实际支付单价**，
+ *   ★v2 单价随赠课模式对齐——作废(void)=实付/购买课时(不含赠送)；结转(carry)=实付/(购买+赠送)(含赠送，与退费均价口径对齐)
  *   剩余价值 = 剩余购买课时 × 实际支付单价
  *   差价 = 目标课包应付 − 剩余价值（正=补款 / 负=退款）
- *   赠课处理：void 作废 / carry 结转
  *
  * 跨域依赖（DTS EDGE-0023，业务 Service→Service 白名单）：
  *   差价为负且原路退款 → 移交退费模块 MOD-010 计算（注入 RefundService，不直连其 Repository）。
  *
- * 注：本单价口径为 D16 需求变更（CR / DEF-004）的修改目标。
+ * v1→v2 差异：v1 单价固定 实付/购买（不含赠送）；v2 carry 模式改为含赠送均价口径，消除与退费的口径不一致。
  */
 @Service
 public class TransferServiceImpl implements TransferService {
@@ -56,16 +55,21 @@ public class TransferServiceImpl implements TransferService {
             throw new BizException(ErrorCode.PARAM_ERROR, "购买课时异常");
         }
 
-        // 实际支付单价（不含赠送）
+        boolean giftVoided = "void".equalsIgnoreCase(dto.giftHandleMode());
+
+        // ★v2/DEF-004：实际支付单价随赠课模式——
+        //   作废(void)=实付/购买课时(不含赠送)；结转(carry)=实付/(购买+赠送)(含赠送，与退费均价口径对齐)
+        int unitDenominator = giftVoided
+                ? snap.purchasedHours()
+                : snap.purchasedHours() + snap.giftHours();
         BigDecimal actualUnitPrice = snap.paidAmount()
-                .divide(BigDecimal.valueOf(snap.purchasedHours()), 2, RoundingMode.HALF_UP);
+                .divide(BigDecimal.valueOf(unitDenominator), 2, RoundingMode.HALF_UP);
 
         int remainingPurchased = Math.max(0, snap.purchasedHours() - snap.consumedHours());
         BigDecimal remainingValue = actualUnitPrice.multiply(BigDecimal.valueOf(remainingPurchased))
                 .setScale(2, RoundingMode.HALF_UP);
 
         BigDecimal diff = targetAmount.subtract(remainingValue).setScale(2, RoundingMode.HALF_UP);
-        boolean giftVoided = "void".equalsIgnoreCase(dto.giftHandleMode());
 
         // 落转班单
         TransferOrder to = new TransferOrder();

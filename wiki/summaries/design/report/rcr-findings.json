@@ -1,15 +1,21 @@
 {
   "meta": {
     "engine": "codegraph_rcr.py",
-    "classes": 39,
+    "classes": 55,
     "impl_modules": [
       "MOD-003",
       "MOD-007",
+      "MOD-009",
       "MOD-010",
       "MOD-012"
     ],
     "endpoints": [
+      "/api/auth/v1/session/login",
+      "/api/order/v1/order/create",
       "/api/order/v1/price/calc",
+      "/api/payment/v1/callback",
+      "/api/payment/v1/claim/create",
+      "/api/payment/v1/reconcile/list",
       "/api/refund/v1/approve/update",
       "/api/refund/v1/calc/create",
       "/api/revenue/v1/confirm/create",
@@ -25,27 +31,27 @@
   },
   "dimensions": {
     "架构": {
-      "checked": 4,
+      "checked": 6,
       "viol": 0
     },
     "模块": {
-      "checked": 29,
+      "checked": 41,
       "viol": 0
     },
     "拓扑": {
-      "checked": 10,
+      "checked": 11,
       "viol": 0
     },
     "契约": {
-      "checked": 5,
+      "checked": 10,
       "viol": 0
     },
     "代码": {
-      "checked": 39,
+      "checked": 55,
       "viol": 0
     },
     "溯源": {
-      "checked": 4,
+      "checked": 6,
       "viol": 0
     }
   },

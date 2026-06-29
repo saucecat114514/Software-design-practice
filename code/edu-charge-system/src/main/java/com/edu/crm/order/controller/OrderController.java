@@ -1,7 +1,9 @@
 package com.edu.crm.order.controller;
 
 import com.edu.common.response.ApiResponse;
+import com.edu.crm.order.model.dto.OrderCreateDTO;
 import com.edu.crm.order.model.dto.PriceCalcDTO;
+import com.edu.crm.order.model.vo.OrderVO;
 import com.edu.crm.order.model.vo.PriceCalcVO;
 import com.edu.crm.order.service.OrderService;
 import jakarta.validation.Valid;
@@ -27,5 +29,11 @@ public class OrderController {
     @PostMapping("/price/calc")
     public ApiResponse<PriceCalcVO> calcPrice(@Valid @RequestBody PriceCalcDTO dto) {
         return ApiResponse.ok(orderService.calcPrice(dto));
+    }
+
+    /** API-0013 创建报名订单。 */
+    @PostMapping("/order/create")
+    public ApiResponse<OrderVO> createOrder(@Valid @RequestBody OrderCreateDTO dto) {
+        return ApiResponse.ok(orderService.createOrder(dto));
     }
 }

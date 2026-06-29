@@ -18,7 +18,7 @@ CODE = ROOT / "code" / "edu-charge-system" / "src" / "main" / "java"
 DESIGN = ROOT / "wiki" / "summaries" / "design"
 CATALOG = DESIGN / "module-catalog.json"
 TOPO = DESIGN / "dependency-topology.json"
-OAS = DESIGN / "oas" / "OAS_V1_教育培训收费系统_接口契约.yaml"
+OAS = DESIGN / "oas" / "OAS_V2_教育培训收费系统_接口契约.yaml"
 OUT = DESIGN / "report" / "rcr-findings.json"
 
 # 包(域.模块slug) → MOD-ID（对齐 MDS / build_oas_inventory.SLUG）

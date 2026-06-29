@@ -16,3 +16,9 @@ VALUES ('ORD-20260601-0007', 40, 20, 10, 9800.00);
 -- 转班目标班级应付价
 MERGE INTO edu_transfer_target_price (target_class_id, target_amount)
 VALUES ('CLS-A2', 6000.00);
+
+-- P5c 对账演示流水（日终对账列表查询用）
+MERGE INTO fin_reconcile (reconcile_id, settle_date, channel_txn_no, amount, match_status)
+VALUES ('RCN-001', '2026-06-25', 'MOCK-TXN-001', 9800.00, 'matched');
+MERGE INTO fin_reconcile (reconcile_id, settle_date, channel_txn_no, amount, match_status)
+VALUES ('RCN-002', '2026-06-25', 'MOCK-TXN-002', 5000.00, 'unclaimed');

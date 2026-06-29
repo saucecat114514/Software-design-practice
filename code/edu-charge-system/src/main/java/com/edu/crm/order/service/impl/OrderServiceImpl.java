@@ -3,10 +3,15 @@ package com.edu.crm.order.service.impl;
 import com.edu.common.config.ChargeProperties;
 import com.edu.common.exception.BizException;
 import com.edu.common.exception.ErrorCode;
+import com.edu.crm.order.model.dto.OrderCreateDTO;
 import com.edu.crm.order.model.dto.PriceCalcDTO;
+import com.edu.crm.order.model.entity.Order;
+import com.edu.crm.order.model.vo.OrderVO;
 import com.edu.crm.order.model.vo.PriceCalcVO;
+import com.edu.crm.order.repository.OrderRepository;
 import com.edu.crm.order.service.OrderService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -32,9 +37,25 @@ public class OrderServiceImpl implements OrderService {
     private static final Set<String> MUTEX_GROUP = Set.of("NEW2026", "VIP");
 
     private final ChargeProperties chargeProperties;
+    private final OrderRepository orderRepository;
 
-    public OrderServiceImpl(ChargeProperties chargeProperties) {
+    public OrderServiceImpl(ChargeProperties chargeProperties, OrderRepository orderRepository) {
         this.chargeProperties = chargeProperties;
+        this.orderRepository = orderRepository;
+    }
+
+    @Override
+    @Transactional
+    public OrderVO createOrder(OrderCreateDTO dto) {
+        Order order = new Order();
+        order.setOrderId("ORD-" + System.currentTimeMillis());
+        order.setCustomerPhone(dto.customerPhone());
+        order.setCourseId(dto.courseId());
+        order.setFinalAmount(dto.finalAmount());
+        order.setPayChannel(dto.payChannel());
+        order.setStatus("paying");   // 待支付回调入账（禁线下收款，统一收款）
+        orderRepository.save(order);
+        return new OrderVO(order.getOrderId(), order.getStatus());
     }
 
     @Override

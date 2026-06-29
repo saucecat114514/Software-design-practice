@@ -54,3 +54,36 @@ CREATE TABLE edu_transfer_target_price (
   target_class_id VARCHAR(64) PRIMARY KEY,
   target_amount   DECIMAL(14,2)
 );
+
+-- ===== P5c 财务主线 =====
+-- 报名订单（MOD-003 crm/order）
+DROP TABLE IF EXISTS crm_order;
+CREATE TABLE crm_order (
+  order_id       VARCHAR(64) PRIMARY KEY,
+  customer_phone VARCHAR(32),
+  course_id      VARCHAR(64),
+  final_amount   DECIMAL(14,2),
+  pay_channel    VARCHAR(16),
+  status         VARCHAR(16)
+);
+
+-- 收款（MOD-009 finance/payment）
+DROP TABLE IF EXISTS fin_payment;
+CREATE TABLE fin_payment (
+  payment_id     VARCHAR(64) PRIMARY KEY,
+  order_id       VARCHAR(64),
+  channel        VARCHAR(16),
+  channel_txn_no VARCHAR(64),
+  amount         DECIMAL(14,2),
+  status         VARCHAR(16)
+);
+
+-- 对账（MOD-009 finance/payment）
+DROP TABLE IF EXISTS fin_reconcile;
+CREATE TABLE fin_reconcile (
+  reconcile_id   VARCHAR(64) PRIMARY KEY,
+  settle_date    VARCHAR(16),
+  channel_txn_no VARCHAR(64),
+  amount         DECIMAL(14,2),
+  match_status   VARCHAR(24)
+);

@@ -1,0 +1,158 @@
+{
+  "name": "教育收费系统 · 工作流2 需求变更全流程（CR→CIA→ADR-005→契约/代码→CRR→新基线）",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger",
+      "name": "手动触发(变更发起)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [120, 360]
+    },
+    {
+      "parameters": { "command": "echo 'CR 立项: 编写 CR-EDU-2026-NNNN（变更前→后，5字段，分级P0/P1/P2）'" },
+      "id": "cr",
+      "name": "CR 变更立项",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [340, 360]
+    },
+    {
+      "parameters": { "command": "echo 'CIA 九维影响分析: 需求/架构/模块/拓扑/契约/代码/数据/业务/测试'" },
+      "id": "cia",
+      "name": "CIA 影响分析(九维)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [560, 360]
+    },
+    {
+      "parameters": {
+        "conditions": { "boolean": [ { "value1": "={{ $json.riskControllable }}", "value2": true } ] }
+      },
+      "id": "ifRisk",
+      "name": "IF 风险可控?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [780, 360]
+    },
+    {
+      "parameters": { "command": "echo '风险不可控/不可控溢出 → 终止变更或回退 CR 重定范围'" },
+      "id": "abort",
+      "name": "回退/终止变更",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [780, 560]
+    },
+    {
+      "parameters": { "command": "echo 'ADR-005 变更架构决策: 摘抄被改原规则+三方案比对+决策'" },
+      "id": "adr",
+      "name": "ADR-005 变更决策",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1000, 320]
+    },
+    {
+      "parameters": { "command": "echo '契约/约束更新: OAS v1→v2(+x-impl-mode) + TLCD/MDS/DTS V1.1 + diff'" },
+      "id": "contract",
+      "name": "契约/约束更新",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1220, 320]
+    },
+    {
+      "parameters": { "command": "echo 'v2 代码分批次生成: 持久化→口径变更★→补模块→Mock+前端 (mvn compile + 实跑)'" },
+      "id": "code",
+      "name": "v2 代码增量生成",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1440, 320]
+    },
+    {
+      "parameters": { "command": "python wiki/summaries/agents/codegraph_rcr.py && echo 'CRR 九维回归校验'" },
+      "id": "crr",
+      "name": "CRR 回归校验(逆向)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1660, 320]
+    },
+    {
+      "parameters": {
+        "conditions": { "boolean": [ { "value1": "={{ $json.driftLE2 && $json.zeroDefect }}", "value2": true } ] }
+      },
+      "id": "ifCrr",
+      "name": "IF 漂移≤2 且 0缺陷?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1880, 320]
+    },
+    {
+      "parameters": { "command": "echo '检出回归缺陷/漂移 → 回退 v2 代码整改并复测'" },
+      "id": "fix",
+      "name": "回退整改(回 v2 代码)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1660, 520]
+    },
+    {
+      "parameters": { "resume": "webhook", "options": {} },
+      "id": "ccb",
+      "name": "CCB 变更审批(人工 Wait/Webhook)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [2100, 320],
+      "webhookId": "ccb-change-approval"
+    },
+    {
+      "parameters": {
+        "conditions": { "boolean": [ { "value1": "={{ $json.approved }}", "value2": true } ] }
+      },
+      "id": "ifApprove",
+      "name": "IF 批准?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [2320, 320]
+    },
+    {
+      "parameters": { "command": "echo '驳回 → 退回 CIA/CR 复议' " },
+      "id": "reject",
+      "name": "驳回退回",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [2320, 520]
+    },
+    {
+      "parameters": { "command": "echo '冻结新基线 BL-…-02 + RTM v2(变更项标修改) + git tag v2-baseline'" },
+      "id": "baseline",
+      "name": "冻结新基线 + RTM v2",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [2540, 320]
+    },
+    {
+      "parameters": { "command": "echo '归档变更三剑客闭环包(CR+CIA+CRR)+CR置已闭环' " },
+      "id": "archive",
+      "name": "归档闭环(CR已闭环)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [2760, 320]
+    }
+  ],
+  "connections": {
+    "手动触发(变更发起)": { "main": [[{ "node": "CR 变更立项", "type": "main", "index": 0 }]] },
+    "CR 变更立项": { "main": [[{ "node": "CIA 影响分析(九维)", "type": "main", "index": 0 }]] },
+    "CIA 影响分析(九维)": { "main": [[{ "node": "IF 风险可控?", "type": "main", "index": 0 }]] },
+    "IF 风险可控?": { "main": [[{ "node": "ADR-005 变更决策", "type": "main", "index": 0 }], [{ "node": "回退/终止变更", "type": "main", "index": 0 }]] },
+    "ADR-005 变更决策": { "main": [[{ "node": "契约/约束更新", "type": "main", "index": 0 }]] },
+    "契约/约束更新": { "main": [[{ "node": "v2 代码增量生成", "type": "main", "index": 0 }]] },
+    "v2 代码增量生成": { "main": [[{ "node": "CRR 回归校验(逆向)", "type": "main", "index": 0 }]] },
+    "CRR 回归校验(逆向)": { "main": [[{ "node": "IF 漂移≤2 且 0缺陷?", "type": "main", "index": 0 }]] },
+    "IF 漂移≤2 且 0缺陷?": { "main": [[{ "node": "CCB 变更审批(人工 Wait/Webhook)", "type": "main", "index": 0 }], [{ "node": "回退整改(回 v2 代码)", "type": "main", "index": 0 }]] },
+    "回退整改(回 v2 代码)": { "main": [[{ "node": "v2 代码增量生成", "type": "main", "index": 0 }]] },
+    "CCB 变更审批(人工 Wait/Webhook)": { "main": [[{ "node": "IF 批准?", "type": "main", "index": 0 }]] },
+    "IF 批准?": { "main": [[{ "node": "冻结新基线 + RTM v2", "type": "main", "index": 0 }], [{ "node": "驳回退回", "type": "main", "index": 0 }]] },
+    "冻结新基线 + RTM v2": { "main": [[{ "node": "归档闭环(CR已闭环)", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": {},
+  "meta": { "description": "需求变更全流程：CR→CIA→IF风险→ADR-005→契约/约束更新→v2代码→CRR回归→IF漂移→CCB人工审批→新基线+RTM v2→归档。含3处回退环(风险/回归/驳回)+1人工审批。对应 CR-EDU-2026-0001 实例。" }
+}

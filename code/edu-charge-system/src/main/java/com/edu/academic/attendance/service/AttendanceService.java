@@ -27,8 +27,9 @@ public class AttendanceService {
         if (acc == null) {
             throw new BizException(ErrorCode.PARAM_ERROR, "学员课时账户不存在: " + dto.studentId());
         }
-        int deduct = 1;
-        int remaining = Math.max(0, acc.remainingHours() - deduct);
+        // 课时不足则不扣（避免账户余额与上报扣减不一致）
+        int deduct = acc.remainingHours() > 0 ? 1 : 0;
+        int remaining = acc.remainingHours() - deduct;
         attendanceRepository.updateRemaining(dto.studentId(), remaining);
 
         AttendanceRecord r = new AttendanceRecord();
